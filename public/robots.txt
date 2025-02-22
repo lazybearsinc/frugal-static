@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://getfrugal.ai/sitemap.xml
+
+# Disallow API endpoints
+Disallow: /api/
+
+# Disallow admin pages
+Disallow: /admin/
+
+# Allow deal pages
+Allow: /deals
+Allow: /deal/ 

@@ -1,0 +1,209 @@
+/* Import SF Pro Display font if available */
+@import url('https://fonts.cdnfonts.com/css/sf-pro-display');
+
+:root {
+  --midnight-turquoise: #0A4D68;
+  --sage-green: #22C55E;         /* New primary action color */
+  --sage-green-dark: #16A34A;    /* For hover states */
+  --sand-pearl: #FCF5ED;
+  --graphite: #183B56;
+  --alert-coral: #FF6B6B;
+}
+
+body {
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+  margin: 0;
+  background-color: var(--sand-pearl);
+  color: var(--graphite);
+}
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background-color: var(--midnight-turquoise);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+}
+
+.logo-image {
+  height: 40px; /* Adjust based on your preferred size */
+  width: auto;
+  object-fit: contain;
+}
+
+.logo a {
+  text-decoration: none;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: white;
+}
+
+.cta-button {
+  background-color: var(--sage-green);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: transform 0.3s ease;
+  white-space: nowrap;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cta-button:hover {
+  background-color: var(--sage-green-dark);
+  transform: scale(1.02);
+}
+
+/* Footer Styles */
+.footer {
+  background-color: white;
+  padding: 3rem 2rem 1.5rem;
+  box-shadow: 0 -4px 12px rgba(0,0,0,0.08);
+  margin-top: auto;
+}
+
+.footer-content {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.footer-sections {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3rem;
+  margin-bottom: 2rem;
+}
+
+.footer h4 {
+  color: var(--midnight-turquoise);
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.footer-nav, .footer-legal {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.footer-nav a, .footer-legal a {
+  text-decoration: none;
+  color: var(--graphite);
+  transition: color 0.3s ease;
+  font-weight: 500;
+}
+
+.footer-nav a:hover, .footer-legal a:hover {
+  color: var(--midnight-turquoise);
+}
+
+.community-savings {
+  text-align: left;
+}
+
+.savings-stats, .user-stats {
+  margin-bottom: 1rem;
+}
+
+.savings-stats p, .user-stats p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--graphite);
+}
+
+.savings-counter {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--sage-green);
+  display: block;
+  margin-top: 0.25rem;
+}
+
+.user-counter {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--midnight-turquoise);
+  display: block;
+  margin-top: 0.25rem;
+}
+
+.footer-bottom {
+  border-top: 1px solid rgba(24, 59, 86, 0.1);
+  padding-top: 1.5rem;
+  text-align: center;
+  color: var(--graphite);
+  font-size: 0.875rem;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  .navbar {
+    padding: 1rem;
+  }
+
+  .logo a {
+    font-size: 1.2rem;
+  }
+
+  .cta-button {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    height: 44px;
+  }
+
+  .footer {
+    padding: 2rem 1rem 1rem;
+  }
+
+  .footer-sections {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    text-align: center;
+  }
+
+  .footer-nav, .footer-legal {
+    align-items: center;
+  }
+
+  .community-savings {
+    text-align: center;
+  }
+
+  .logo-image {
+    height: 32px;
+  }
+}
+
+/* Update text colors */
+h1, h2, h3, h4 {
+  color: var(--midnight-turquoise);
+}
+
+p, li {
+  color: var(--graphite);
+}
+
+/* Footer colors */
+.footer-nav a, .footer-legal a {
+  color: var(--graphite);
+}
+
+.footer-nav a:hover, .footer-legal a:hover {
+  color: var(--midnight-turquoise);
+}
+
+.savings-counter {
+  color: var(--sage-green);
+} 
