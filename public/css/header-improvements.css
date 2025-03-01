@@ -1,0 +1,113 @@
+:root {
+    --primary-color: #1A365D;
+    --primary-hover: #234876;
+    --secondary-color: #D0021B;
+    --secondary-gradient: linear-gradient(135deg, #D0021B, #B7021B);
+    --background-color: #f8f9fa;
+    --text-color: #1A1A1A;
+    --text-muted: #4A5568;
+    --border-color: #E2E8F0;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.08);
+    --shadow-hover: 0 8px 12px rgba(0,0,0,0.1);
+}
+
+.deals-navbar {
+    background: var(--primary-color);
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.deals-logo {
+    height: 32px;
+}
+
+.deals-logo-image {
+    height: 100%;
+    width: auto;
+}
+
+.cta-button-deals {
+    background-color: var(--sage-green); /* Customize if needed */
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: transform 0.3s ease;
+    white-space: nowrap;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.warehouse-header {
+    background: white;
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(8px);
+    background-color: rgba(255, 255, 255, 0.95);
+}
+
+.warehouse-selector {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.current-warehouse {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.warehouse-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.warehouse-label {
+    font-size: 0.9em;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.warehouse-address {
+    font-size: 1.1em;
+    color: var(--text-color);
+    font-weight: 600;
+}
+
+.change-warehouse {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    background: var(--primary-color);
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.change-warehouse:hover {
+    background: var(--primary-hover);
+    transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+    .warehouse-selector {
+        padding: 12px 16px;
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+    }
+}

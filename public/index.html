@@ -2,6 +2,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Frugal - Never Miss Costco Price Drops</title>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-B4EX7LQ7V4"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-B4EX7LQ7V4');
+    </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.29.0/feather.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="css/styles.css">
@@ -43,7 +52,11 @@
                     <img src="assets/brand/White logo - no background.svg" alt="Frugal" class="logo-image">
                 </a>
             </div>
-            <a href="#" class="cta-button">Never Miss Savings</a>
+            <div class="cta-container">
+                <a href="costco-deals/" class="cta-button cta-secondary">Costco Deals</a>
+                <a href="https://wa.me/message/KUPHMY4ZK25QA1" target="_blank" class="cta-button">Never Miss Savings</a>
+            </div>
+    
         </nav>
     </header>
 
@@ -365,7 +378,7 @@
                 <!-- FAQ Item -->
                 <div class="bg-white rounded-xl p-6 shadow-sm">
                     <h3 class="text-lg font-semibold text-[#0A4D68] mb-2">What exactly does this service do?</h3>
-                    <p class="text-[#183B56]">We monitor prices at Costco locations throughout the United States and Canada, and we alert you when there’s a drop in the cost of your purchases. Just share your receipt with us, and we’ll keep an eye out for savings opportunities.</p>
+                    <p class="text-[#183B56]">We monitor prices at Costco locations throughout the United States and Canada, and we alert you when there's a drop in the cost of your purchases. Just share your receipt with us, and we'll keep an eye out for savings opportunities.</p>
                 </div>
     
                 <!-- FAQ Item -->
@@ -595,6 +608,7 @@
                 </div>
                 <div class="flex justify-start md:justify-end space-x-6">
                     <a href="/" class="text-sm text-[#183B56] hover:text-[#0A4D68]">Home</a>
+                    <a href="/costco-deals" class="text-sm text-[#183B56] hover:text-[#0A4D68]">Costco Deals</a>
                     <a href="/privacy-policy" class="text-sm text-[#183B56] hover:text-[#0A4D68]">Privacy Policy</a>
                     <a href="/terms" class="text-sm text-[#183B56] hover:text-[#0A4D68]">Terms of Service</a>
                 </div>
@@ -647,8 +661,8 @@
 </style>
 
 <script>
-    document.querySelectorAll('.cta-button').forEach(button => {
-        button.href = 'https://wa.me/message/KUPHMY4ZK25QA1';
-    });
+    // document.querySelectorAll('.cta-button').forEach(button => {
+    //     button.href = 'https://wa.me/message/KUPHMY4ZK25QA1';
+    // });
 </script>
 </body></html>

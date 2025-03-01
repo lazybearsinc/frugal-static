@@ -24,7 +24,10 @@ jobs:
         run: |
           npm run build:prod:no-cache  # Using no-cache build for deployments
         env:
-          FRUGAL_API_KEY: ${{ secrets.FRUGAL_API_KEY }}  # Add your API key if needed
+          FRUGAL_API_KEY: ${{ secrets.FRUGAL_API_KEY }}
+          API_BASE_URL: ${{ secrets.API_BASE_URL }}
+          DEFAULT_ZIPCODE: ${{ secrets.DEFAULT_ZIPCODE }}
+          DEFAULT_COUNTRY: ${{ secrets.DEFAULT_COUNTRY }}
           NODE_ENV: 'production'
       
       - name: Deploy to Firebase
@@ -33,4 +36,4 @@ jobs:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseToken: '${{ secrets.FIREBASE_TOKEN }}'
           channelId: live
-          projectId: ${{ secrets.FIREBASE_PROJECT_ID }}  # Your Firebase project ID 
+          projectId: '${{ secrets.FIREBASE_PROJECT_ID }}' 
