@@ -1,0 +1,36 @@
+name: Build and Deploy Deals Site
+
+on:
+  schedule:
+    - cron: '0 8 * * 1,3,5'  # Runs at 8 AM UTC on Monday, Wednesday, Friday
+  workflow_dispatch:  # Allows manual triggering of the workflow
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4  # Using latest version of checkout action
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'  # Using latest LTS version
+          cache: 'npm'
+      
+      - name: Install Dependencies
+        run: npm ci  # Using clean install for reproducible builds
+      
+      - name: Build Static Files
+        run: |
+          npm run build:prod:no-cache  # Using no-cache build for deployments
+        env:
+          FRUGAL_API_KEY: ${{ secrets.FRUGAL_API_KEY }}  # Add your API key if needed
+          NODE_ENV: 'production'
+      
+      - name: Deploy to Firebase
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseToken: '${{ secrets.FIREBASE_TOKEN }}'
+          channelId: live
+          projectId: ${{ secrets.FIREBASE_PROJECT_ID }}  # Your Firebase project ID 

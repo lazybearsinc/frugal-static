@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>{{title}}</title>
+    <meta name="description" content="{{description}}">
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-B4EX7LQ7V4"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-B4EX7LQ7V4');
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.29.0/feather.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/header-improvements.css">
+    <style>
+        /* Include the CSS from your existing deal page */
+        {{> styles}}
+
+        /* Deal detail styles */
+        .deal-detail {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: minmax(300px, 1.5fr) 2fr;
+            gap: 30px;
+        }
+
+        .product-image-container {
+            position: relative;
+            top: auto;
+            height: auto;
+        }
+
+        .product-image {
+            width: 100%;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .product-info {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .product-title {
+            font-size: 1.8em;
+            margin: 0;
+            line-height: 1.3;
+        }
+
+        .saving-badge {
+            display: inline-block;
+            background: var(--secondary-color);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 16px;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .expiration {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--secondary-color);
+            font-size: 0.9em;
+            padding: 8px 12px;
+            background: rgba(255,107,107,0.1);
+            border-radius: 8px;
+            width: fit-content;
+        }
+
+        .expiration svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .warehouse-info-detail, .item-details {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .warehouse-info-detail h3, .item-details h3 {
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-color);
+        }
+
+        .share-section {
+            margin-top: 15px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 15px;
+        }
+
+        .share-section h3 {
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text-color);
+        }
+
+        /* Breadcrumbs styles */
+        .breadcrumbs {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+        }
+
+        .breadcrumbs a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .breadcrumbs a:hover {
+            text-decoration: underline;
+        }
+
+        .breadcrumbs .separator {
+            color: #666;
+        }
+
+        .breadcrumbs .truncated-title {
+            max-width: 300px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: inline-block;
+        }
+
+        @media (max-width: 768px) {
+            .deal-detail {
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .product-title {
+                font-size: 1.5em;
+            }
+
+            .share-buttons {
+                justify-content: center;
+            }
+
+            .share-button.copy {
+                margin-left: 0;
+            }
+
+            .promotion-content h2 {
+                font-size: 1.5em;
+                color: white;
+            }
+
+            .promotion-content p {
+                font-size: 1em;
+                color: white;
+            }
+
+            .whatsapp-button {
+                width: 100%;
+                justify-content: center;
+                padding: 12px 20px;
+                font-size: 1em;
+                color: white;
+            }
+
+            .breadcrumbs .truncated-title {
+                max-width: 150px;
+            }
+        }
+
+        /* Social sharing styles */
+        .share-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .share-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 20px;
+            color: white;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .share-button:hover {
+            opacity: 0.9;
+        }
+
+        .share-button svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .share-button.facebook { background: #1877F2; }
+        .share-button.twitter { background: #1DA1F2; }
+        .share-button.whatsapp { background: #25D366; }
+        .share-button.copy { background: #666; }
+
+        /* Cross promotion styles */
+        .cross-promotion {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, var(--primary-color), #1e40af);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .promotion-content {
+            max-width: 600px;
+            margin: 0 auto;
+            color: white;
+        }
+
+        .promotion-content h2 {
+            font-size: 1.8em;
+            margin-bottom: 15px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .promotion-content p {
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            opacity: 0.9;
+            color: white;
+        }
+
+        .whatsapp-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: #25D366;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 30px;
+            text-decoration: none;
+            margin-top: 20px;
+            font-weight: bold;
+            font-size: 1.1em;
+            transition: transform 0.2s;
+        }
+
+        .whatsapp-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            color: white;
+        }
+
+        .whatsapp-button svg {
+            width: 24px;
+            height: 24px;
+            fill: currentColor;
+        }
+
+        /* Footer styles */
+        .footer {
+            background: white;
+            border-top: 1px solid var(--border-color);
+            margin-top: 40px;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 48px 20px;
+        }
+
+        .footer-bottom {
+            border-top: 1px solid var(--border-color);
+            padding-top: 24px;
+            margin-top: 24px;
+        }
+    </style>
+</head>
+<body class="bg-white">
+    <header>
+        {{> navbar}}
+    </header>
+    <div class="warehouse-header">
+        <div class="warehouse-selector">
+            <div class="current-warehouse">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+                    <circle cx="12" cy="9" r="2" fill="currentColor"/>
+                </svg>
+                <div class="warehouse-info">
+                    <span class="warehouse-label">Costco Warehouse Deals</span>
+                    <strong class="warehouse-address">{{warehouse.address}}, {{warehouse.city}}</strong>
+                </div>
+            </div>
+            <button class="change-warehouse">Change Warehouse</button>
+        </div>
+    </div>
+
+    <nav class="breadcrumbs">
+        <a href="/costco-deals">Home</a>
+        <span class="separator">›</span>
+        <a href="/costco-deals/{{warehouse.slug}}">{{warehouse.city}} Deals</a>
+        <span class="separator">›</span>
+        <span class="truncated-title">{{deal.title}}</span>
+    </nav>
+
+    <main class="deal-detail">
+        <div class="product-image-container">
+            <img src="{{deal.imageUrl}}" 
+                 alt="{{deal.title}}" 
+                 class="product-image"
+                 onerror="this.src='/images/placeholder.svg'">
+        </div>
+
+        <div class="product-info">
+            <h1 class="product-title">{{deal.title}}</h1>
+            
+            <div class="saving-badge">
+                Save {{deal.savings}}
+            </div>
+
+            <div class="expiration">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 6v6l4 2"/>
+                </svg>
+                {{deal.daysLeft}} days left (Ends {{deal.endDate}})
+            </div>
+
+            <div class="warehouse-info-detail">
+                <h3>Available at:</h3>
+                <p>{{warehouse.address}}, {{warehouse.city}}</p>
+            </div>
+
+            <div class="item-details">
+                <h3>Item Details:</h3>
+                <p><strong>Item Number:</strong> #{{deal.itemNumber}}</p>
+            </div>
+
+            <div class="share-section">
+                <h3>Share this deal:</h3>
+                <div class="share-buttons">
+                    <button class="share-button facebook" onclick="shareDeal('facebook')">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M18.77 7.46H14.5v-1.9c0-.9.6-1.1 1-1.1h3V.5h-4.33C10.24.5 9.5 3.44 9.5 5.32v2.15h-3v4h3v12h5v-12h3.85l.42-4z"/>
+                        </svg>
+                        Facebook
+                    </button>
+                    <button class="share-button twitter" onclick="shareDeal('twitter')">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M23.44 4.83c-.8.37-1.5.38-2.22.02.93-.56.98-.96 1.32-2.02-.88.52-1.86.9-2.9 1.1-.82-.88-2-1.43-3.3-1.43-2.5 0-4.55 2.04-4.55 4.54 0 .36.03.7.1 1.04-3.77-.2-7.12-2-9.36-4.75-.4.67-.6 1.45-.6 2.3 0 1.56.8 2.95 2 3.77-.74-.03-1.44-.23-2.05-.57v.06c0 2.2 1.56 4.03 3.64 4.44-.67.2-1.37.2-2.06.08.58 1.8 2.26 3.12 4.25 3.16C5.78 18.1 3.37 18.74 1 18.46c2 1.3 4.4 2.04 6.97 2.04 8.35 0 12.92-6.92 12.92-12.93 0-.2 0-.4-.02-.6.9-.63 1.96-1.22 2.56-2.14z"/>
+                        </svg>
+                        Twitter
+                    </button>
+                    <button class="share-button whatsapp" onclick="shareDeal('whatsapp')">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347"/>
+                        </svg>
+                        WhatsApp
+                    </button>
+                    <button class="share-button copy" onclick="copyDealLink()">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+                        </svg>
+                        Copy Link
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <section class="cross-promotion">
+            <div class="promotion-content">
+                <h2>💰 Never Miss a Price Drop!</h2>
+                <p>Did you know? We can monitor your Costco purchases for price drops and help you claim adjustments automatically!</p>
+                <p>Just send your receipt through WhatsApp, and we'll track prices for 30 days.</p>
+                {{> whatsapp_button}}
+            </div>
+        </section>
+    </main>
+
+    <div class="ad-banner">
+        {{> ad_unit}}
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <!-- Branding Message -->
+            <div class="mb-8">
+                <div class="text-2xl font-bold text-[#0A4D68] mb-4">Frugal</div>
+                <p class="text-[#183B56] max-w-sm">
+                    Helping Costco shoppers save money through automated price tracking and instant WhatsApp alerts.
+                </p>
+            </div>
+
+            <!-- Social Media Icons -->
+            <div class="flex space-x-6 mb-8">
+                <a href="https://x.com/GetFrugalAI" target="_blank" rel="noopener noreferrer" class="text-[#183B56] hover:text-[#0A4D68] transition-colors">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                    </svg>
+                </a>
+                <a href="https://www.instagram.com/getfrugal_app/" target="_blank" rel="noopener noreferrer" class="text-[#183B56] hover:text-[#0A4D68] transition-colors">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                    </svg>
+                </a>
+                <a href="https://www.facebook.com/profile.php?id=61560810536503" target="_blank" rel="noopener noreferrer" class="text-[#183B56] hover:text-[#0A4D68] transition-colors">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z"/>
+                    </svg>
+                </a>
+            </div>
+
+            <!-- Bottom Bar -->
+            <div class="footer-bottom">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                    <div class="text-sm text-[#183B56]">
+                        © 2024 Frugal. All rights reserved.
+                    </div>
+                    <div class="flex justify-start md:justify-end space-x-6">
+                        <a href="/" class="text-sm text-[#183B56] hover:text-[#0A4D68]">Home</a>
+                        <a href="/privacy-policy" class="text-sm text-[#183B56] hover:text-[#0A4D68]">Privacy Policy</a>
+                        <a href="/terms" class="text-sm text-[#183B56] hover:text-[#0A4D68]">Terms of Service</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Social sharing functionality
+        function shareDeal(platform) {
+            const url = encodeURIComponent(window.location.href);
+            const title = encodeURIComponent('{{deal.title}} - Save {{deal.savings}} at Costco {{warehouse.city}}');
+            
+            let shareUrl;
+            switch(platform) {
+                case 'facebook':
+                    shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
+                    break;
+                case 'twitter':
+                    shareUrl = `https://twitter.com/intent/tweet?url=${url}&text=${title}`;
+                    break;
+                case 'whatsapp':
+                    shareUrl = `https://wa.me/?text=${title}%20${url}`;
+                    break;
+            }
+            
+            if (shareUrl) {
+                window.open(shareUrl, '_blank', 'width=600,height=400');
+            }
+        }
+
+        // Copy link functionality
+        function copyDealLink() {
+            const url = window.location.href;
+            navigator.clipboard.writeText(url).then(() => {
+                const button = document.querySelector('.share-button.copy');
+                const originalText = button.textContent;
+                button.textContent = 'Copied!';
+                setTimeout(() => {
+                    button.innerHTML = `
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+                        </svg>
+                        Copy Link
+                    `;
+                }, 2000);
+            });
+        }
+    </script>
+
+    <script src="/js/enhanced-warehouse.js"></script>
+</body>
+</html> 

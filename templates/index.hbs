@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Costco Deals | Find the Best Savings at Your Local Warehouse</title>
+    <meta name="description" content="Browse the latest Costco deals and instant savings. Find great discounts on groceries, electronics, home goods and more at your local Costco warehouse.">
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-B4EX7LQ7V4"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-B4EX7LQ7V4');
+    </script>
+    <link rel="stylesheet" href="/css/header-improvements.css">
+    <style>
+        {{> styles}}
+        {{> deal_card_styles}}
+    </style>
+</head>
+<body>
+
+<header>
+        {{> navbar}}
+    </header>
+        <div class="warehouse-header">
+            <div class="warehouse-selector">
+                <div class="current-warehouse">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+                        <circle cx="12" cy="9" r="2" fill="currentColor"/>
+                    </svg>
+                    <div class="warehouse-info">
+                        <span class="warehouse-label">Your Costco Warehouse</span>
+                        <strong class="warehouse-address">{{defaultWarehouse.address}}, {{defaultWarehouse.city}}</strong>
+                    </div>
+                </div>
+                <button class="change-warehouse">
+                    Change Location
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="ad-banner">
+        {{> ad_unit}}
+    </div>
+
+    <div class="filters">
+        <div class="filter-group">
+            <button class="filter-button active">All Savings</button>
+            <button class="filter-button">$0-$10</button>
+            <button class="filter-button">$10-$50</button>
+            <button class="filter-button">$50+</button>
+        </div>
+        <div class="filter-group">
+            <button class="filter-button">Ending Soon</button>
+            <button class="filter-button">Highest Savings</button>
+        </div>
+    </div>
+
+    <main class="deals-grid">
+        {{#each defaultWarehouse.deals}}
+        <a href="/costco-deals/{{../defaultWarehouse.slug}}/{{this.slug}}" class="deal-card">
+            <img src="{{this.imageUrl}}" 
+                 alt="{{this.title}}" 
+                 class="deal-image"
+                 onerror="this.src='/images/placeholder.svg'">
+            <div class="deal-content">
+                <div class="deal-saving">Save {{this.savings}}</div>
+                <h3 class="deal-title">{{this.title}}</h3>
+                <div class="deal-meta">
+                    <span class="expires">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M12 6v6l4 2"/>
+                        </svg>
+                        {{#if this.daysLeft}}
+                            {{this.daysLeft}} days left
+                        {{else}}
+                            Ends {{this.endDate}}
+                        {{/if}}
+                    </span>
+                    <span class="item-number">#{{this.itemNumber}}</span>
+                </div>
+            </div>
+        </a>
+        {{/each}}
+    </main>
+
+    <div class="ad-banner">
+        {{> ad_unit}}
+    </div>
+
+    <script src="/js/enhanced-warehouse.js"></script>
+</body>
+</html> 

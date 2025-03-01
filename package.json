@@ -1,0 +1,26 @@
+{
+  "name": "frugal-static",
+  "version": "1.0.0",
+  "description": "Static site generator for Frugal Costco deals",
+  "main": "scripts/build.js",
+  "scripts": {
+    "build": "node scripts/build.js",
+    "build:dev": "NODE_ENV=development node scripts/build.js",
+    "build:prod": "NODE_ENV=production node scripts/build.js",
+    "build:prod:no-cache": "NODE_ENV=production CACHE_ENABLED=false node scripts/build.js",
+    "dev": "NODE_ENV=development npm run build:dev && npm run serve",
+    "clean": "rm -rf public/costco-deals/*",
+    "clean:cache": "node scripts/build.js --clear-cache",
+    "prebuild": "npm run clean",
+    "serve": "node scripts/serve.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.18.3",
+    "handlebars": "^4.7.8",
+    "node-fetch": "^2.7.0"
+  },
+  "devDependencies": {
+    "prettier": "^3.2.5"
+  }
+}
