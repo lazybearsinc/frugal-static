@@ -3,7 +3,13 @@ name: Build and Deploy Deals Site
 on:
   schedule:
     - cron: '0 8 * * 1,3,5'  # Runs at 8 AM UTC on Monday, Wednesday, Friday
-  workflow_dispatch:  # Allows manual triggering of the workflow
+  workflow_dispatch:
+    inputs:
+      use_cache:
+        description: 'Use cache for build'
+        type: boolean
+        default: false
+        required: true
 
 jobs:
   build_and_deploy:
@@ -22,7 +28,11 @@ jobs:
       
       - name: Build Static Files
         run: |
-          npm run build:prod:no-cache  # Using no-cache build for deployments
+          if [ "${{ github.event_name }}" = "schedule" ] || [ "${{ github.event.inputs.use_cache }}" = "false" ]; then
+            npm run build:prod:no-cache
+          else
+            npm run build:prod
+          fi
         env:
           API_KEY: ${{ secrets.API_KEY }}
           API_BASE_URL: ${{ secrets.API_BASE_URL }}
