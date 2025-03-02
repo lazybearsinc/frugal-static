@@ -14,11 +14,12 @@
 
       gtag('config', 'G-B4EX7LQ7V4');
     </script>
-    <!-- Google AdSense -->
+    <!-- Google AdSense (single inclusion) -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7930233358759132"
          crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.29.0/feather.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/js/adsense-config.js"></script>
     <link rel="stylesheet" href="/css/header-improvements.css">
     <style>
         /* Page-specific styles */
@@ -32,24 +33,33 @@
             background: #f9f9f9;
             padding: 1rem;
             border-radius: 8px;
+            overflow: hidden;
+            transition: min-height 0.3s ease;
         }
         
         .deal-list-top-ad {
-            max-width: 1200px;
-            margin: 1.5rem auto;
-            padding: 0 20px;
+            margin: 2rem auto;
+            max-width: 970px;
         }
         
         .deal-card-ad {
             grid-column: 1 / -1;
+            margin: 2rem 0;
+        }
+        
+        /* Placeholder styling for ad containers before load */
+        .ad-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f9f9f9;
+            color: #666;
+            font-size: 0.9em;
         }
         
         @media (max-width: 768px) {
             .deal-card-ad {
                 margin: 1rem 0;
-            }
-            .deal-list-top-ad {
-                padding: 0 15px;
             }
         }
 
@@ -288,7 +298,7 @@
         // Initialize Feather icons
         feather.replace();
 
-        // Responsive ad placement
+        // Responsive ad placement with lazy loading
         function adjustAdPlacement() {
             const dealCards = document.querySelectorAll('.deal-card');
             const adContainers = document.querySelectorAll('.deal-card-ad');
@@ -301,21 +311,34 @@
             
             dealCards.forEach((card, index) => {
                 if (index > 0 && (index + 1) % adInterval === 0) {
-                    const adElement = document.createElement('div');
-                    adElement.innerHTML = `{{> deal_card_ad}}`;
-                    card.after(adElement.firstElementChild);
+                    const adContainer = createAdUnit('dealCard');
+                    card.after(adContainer);
+                    lazyLoadAd(adContainer.querySelector('.adsbygoogle'));
                 }
             });
         }
 
-        // Initial placement
-        adjustAdPlacement();
+        // Initialize top ad
+        window.addEventListener('DOMContentLoaded', () => {
+            const topAdContainer = document.querySelector('.deal-list-top-ad');
+            if (topAdContainer) {
+                createAdUnit('dealListTop', topAdContainer);
+                lazyLoadAd(topAdContainer.querySelector('.adsbygoogle'));
+            }
+        });
+
+        // Initial card ad placement
+        window.addEventListener('load', () => {
+            adjustAdPlacement();
+        });
         
-        // Adjust on resize
+        // Debounced resize handler
         let resizeTimer;
         window.addEventListener('resize', () => {
             clearTimeout(resizeTimer);
-            resizeTimer = setTimeout(adjustAdPlacement, 250);
+            resizeTimer = setTimeout(() => {
+                adjustAdPlacement();
+            }, 250);
         });
     </script>
 
