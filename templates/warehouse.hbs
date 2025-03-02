@@ -14,12 +14,44 @@
 
       gtag('config', 'G-B4EX7LQ7V4');
     </script>
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7930233358759132"
+         crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.29.0/feather.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="/css/header-improvements.css">
     <style>
         /* Page-specific styles */
         {{> deal_card_styles}}
+
+        /* Ad container styles */
+        .ad-unit-container {
+            width: 100%;
+            margin: 1.5rem 0;
+            text-align: center;
+            background: #f9f9f9;
+            padding: 1rem;
+            border-radius: 8px;
+        }
+        
+        .deal-list-top-ad {
+            max-width: 1200px;
+            margin: 1.5rem auto;
+            padding: 0 20px;
+        }
+        
+        .deal-card-ad {
+            grid-column: 1 / -1;
+        }
+        
+        @media (max-width: 768px) {
+            .deal-card-ad {
+                margin: 1rem 0;
+            }
+            .deal-list-top-ad {
+                padding: 0 15px;
+            }
+        }
 
         /* Warehouse selector styles */
         .warehouse-header {
@@ -205,9 +237,7 @@
         </div>
     </div>
 
-    <div class="ad-banner">
-        {{> ad_unit}}
-    </div>
+    {{> deal_list_top_ad}}
 
     <div class="filters">
         <div class="filter-group">
@@ -224,36 +254,70 @@
 
     <main class="deals-grid">
         {{#each warehouse.deals}}
-        <a href="/costco-deals/{{../warehouse.slug}}/{{this.slug}}" class="deal-card">
-            <img src="{{this.imageUrl}}" 
-                 alt="{{this.title}}" 
-                 class="deal-image"
-                 onerror="this.src='/images/placeholder.svg'">
-            <div class="deal-content">
-                <div class="deal-saving">Save {{this.savings}}</div>
-                <h3 class="deal-title">{{this.title}}</h3>
-                <div class="deal-meta">
-                    <span class="expires">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <circle cx="12" cy="12" r="10"/>
-                            <path d="M12 6v6l4 2"/>
-                        </svg>
-                        {{#if this.daysLeft}}
-                            {{this.daysLeft}} days left
-                        {{else}}
-                            Ends {{formatDate this.endDate}}
-                        {{/if}}
-                    </span>
-                    <span class="item-number">#{{this.itemNumber}}</span>
+            <a href="/costco-deals/{{../warehouse.slug}}/{{this.slug}}" class="deal-card">
+                <img src="{{this.imageUrl}}" 
+                     alt="{{this.title}}" 
+                     class="deal-image"
+                     onerror="this.src='/images/placeholder.svg'">
+                <div class="deal-content">
+                    <div class="deal-saving">Save {{this.savings}}</div>
+                    <h3 class="deal-title">{{this.title}}</h3>
+                    <div class="deal-meta">
+                        <span class="expires">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M12 6v6l4 2"/>
+                            </svg>
+                            {{#if this.daysLeft}}
+                                {{this.daysLeft}} days left
+                            {{else}}
+                                Ends {{formatDate this.endDate}}
+                            {{/if}}
+                        </span>
+                        <span class="item-number">#{{this.itemNumber}}</span>
+                    </div>
                 </div>
-            </div>
-        </a>
+            </a>
+            {{#if (and (not @first) (eq (mod @index 6) 5))}}
+                {{> deal_card_ad}}
+            {{/if}}
         {{/each}}
     </main>
 
-    <div class="ad-banner">
-        {{> ad_unit}}
-    </div>
+    <script>
+        // Initialize Feather icons
+        feather.replace();
+
+        // Responsive ad placement
+        function adjustAdPlacement() {
+            const dealCards = document.querySelectorAll('.deal-card');
+            const adContainers = document.querySelectorAll('.deal-card-ad');
+            
+            // Remove existing ads
+            adContainers.forEach(ad => ad.remove());
+            
+            const isMobile = window.innerWidth <= 768;
+            const adInterval = isMobile ? 3 : 6;
+            
+            dealCards.forEach((card, index) => {
+                if (index > 0 && (index + 1) % adInterval === 0) {
+                    const adElement = document.createElement('div');
+                    adElement.innerHTML = `{{> deal_card_ad}}`;
+                    card.after(adElement.firstElementChild);
+                }
+            });
+        }
+
+        // Initial placement
+        adjustAdPlacement();
+        
+        // Adjust on resize
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(adjustAdPlacement, 250);
+        });
+    </script>
 
     <!-- Footer -->
     <footer class="footer">

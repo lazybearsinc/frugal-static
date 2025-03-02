@@ -14,55 +14,75 @@
 
       gtag('config', 'G-B4EX7LQ7V4');
     </script>
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7930233358759132"
+         crossorigin="anonymous"></script>
     <link rel="stylesheet" href="/css/header-improvements.css">
     <style>
         {{> styles}}
         {{> deal_card_styles}}
+        /* Ad container styles */
+        .ad-unit-container {
+            width: 100%;
+            margin: 1rem 0;
+            text-align: center;
+            background: #f9f9f9;
+            padding: 1rem;
+            border-radius: 8px;
+        }
+        .deal-list-top-ad {
+            margin-bottom: 2rem;
+        }
+        .deal-card-ad {
+            grid-column: 1 / -1;
+        }
+        @media (max-width: 768px) {
+            .deal-card-ad {
+                margin: 1rem 0;
+            }
+        }
     </style>
 </head>
 <body>
 
 <header>
-        {{> navbar}}
-    </header>
-        <div class="warehouse-header">
-            <div class="warehouse-selector">
-                <div class="current-warehouse">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
-                        <circle cx="12" cy="9" r="2" fill="currentColor"/>
-                    </svg>
-                    <div class="warehouse-info">
-                        <span class="warehouse-label">Your Costco Warehouse</span>
-                        <strong class="warehouse-address">{{defaultWarehouse.address}}, {{defaultWarehouse.city}}</strong>
-                    </div>
+    {{> navbar}}
+    <div class="warehouse-header">
+        <div class="warehouse-selector">
+            <div class="current-warehouse">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+                    <circle cx="12" cy="9" r="2" fill="currentColor"/>
+                </svg>
+                <div class="warehouse-info">
+                    <span class="warehouse-label">Your Costco Warehouse</span>
+                    <strong class="warehouse-address">{{defaultWarehouse.address}}, {{defaultWarehouse.city}}</strong>
                 </div>
-                <button class="change-warehouse">
-                    Change Location
-                </button>
             </div>
-        </div>
-    </header>
-
-    <div class="ad-banner">
-        {{> ad_unit}}
-    </div>
-
-    <div class="filters">
-        <div class="filter-group">
-            <button class="filter-button active">All Savings</button>
-            <button class="filter-button">$0-$10</button>
-            <button class="filter-button">$10-$50</button>
-            <button class="filter-button">$50+</button>
-        </div>
-        <div class="filter-group">
-            <button class="filter-button">Ending Soon</button>
-            <button class="filter-button">Highest Savings</button>
+            <button class="change-warehouse">
+                Change Location
+            </button>
         </div>
     </div>
+</header>
 
-    <main class="deals-grid">
-        {{#each defaultWarehouse.deals}}
+{{> deal_list_top_ad}}
+
+<div class="filters">
+    <div class="filter-group">
+        <button class="filter-button active">All Savings</button>
+        <button class="filter-button">$0-$10</button>
+        <button class="filter-button">$10-$50</button>
+        <button class="filter-button">$50+</button>
+    </div>
+    <div class="filter-group">
+        <button class="filter-button">Ending Soon</button>
+        <button class="filter-button">Highest Savings</button>
+    </div>
+</div>
+
+<main class="deals-grid">
+    {{#each defaultWarehouse.deals}}
         <a href="/costco-deals/{{../defaultWarehouse.slug}}/{{this.slug}}" class="deal-card">
             <img src="{{this.imageUrl}}" 
                  alt="{{this.title}}" 
@@ -87,13 +107,43 @@
                 </div>
             </div>
         </a>
-        {{/each}}
-    </main>
+        {{#if (and (not @first) (eq (mod @index 6) 5))}}
+            {{> deal_card_ad}}
+        {{/if}}
+    {{/each}}
+</main>
 
-    <div class="ad-banner">
-        {{> ad_unit}}
-    </div>
+<script src="/js/enhanced-warehouse.js"></script>
+<script>
+    // Responsive ad placement
+    function adjustAdPlacement() {
+        const dealCards = document.querySelectorAll('.deal-card');
+        const adContainers = document.querySelectorAll('.deal-card-ad');
+        
+        // Remove existing ads
+        adContainers.forEach(ad => ad.remove());
+        
+        const isMobile = window.innerWidth <= 768;
+        const adInterval = isMobile ? 3 : 6;
+        
+        dealCards.forEach((card, index) => {
+            if (index > 0 && (index + 1) % adInterval === 0) {
+                const adElement = document.createElement('div');
+                adElement.innerHTML = `{{> deal_card_ad}}`;
+                card.after(adElement.firstElementChild);
+            }
+        });
+    }
 
-    <script src="/js/enhanced-warehouse.js"></script>
+    // Initial placement
+    adjustAdPlacement();
+    
+    // Adjust on resize
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(adjustAdPlacement, 250);
+    });
+</script>
 </body>
 </html> 

@@ -15,6 +15,9 @@
 
       gtag('config', 'G-B4EX7LQ7V4');
     </script>
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7930233358759132"
+         crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.29.0/feather.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="/css/header-improvements.css">
@@ -294,6 +297,64 @@
             padding-top: 24px;
             margin-top: 24px;
         }
+
+        /* Ad container styles */
+        .ad-unit-container {
+            width: 100%;
+            margin: 1.5rem 0;
+            text-align: center;
+            background: #f9f9f9;
+            padding: 1rem;
+            border-radius: 8px;
+        }
+        
+        .deal-detail-ad {
+            grid-column: 1 / -1;
+            margin: 2rem 0;
+        }
+        
+        .deal-detail-bottom-ad {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: white;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            margin: 0;
+            border-radius: 0;
+            padding: 0.5rem;
+            max-height: 90px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .deal-detail-bottom-ad .adsbygoogle {
+            max-height: 80px;
+            margin: 0 auto;
+        }
+        
+        /* Add padding to prevent content from being hidden behind fixed bottom ad */
+        body {
+            padding-bottom: 90px;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding-bottom: 80px;
+            }
+            
+            .deal-detail-bottom-ad {
+                max-height: 70px;
+                padding: 0.25rem;
+            }
+            
+            .deal-detail-bottom-ad .adsbygoogle {
+                max-height: 60px;
+            }
+        }
     </style>
 </head>
 <body class="bg-white">
@@ -347,6 +408,8 @@
                 {{deal.daysLeft}} days left (Ends {{deal.endDate}})
             </div>
 
+            {{> deal_detail_ad}}
+
             <div class="warehouse-info-detail">
                 <h3>Available at:</h3>
                 <p>{{warehouse.address}}, {{warehouse.city}}</p>
@@ -398,9 +461,6 @@
         </section>
     </main>
 
-    <div class="ad-banner">
-        {{> ad_unit}}
-    </div>
 
     <!-- Footer -->
     <footer class="footer">
@@ -447,6 +507,8 @@
             </div>
         </div>
     </footer>
+
+    {{> deal_detail_bottom_ad}}
 
     <script>
         // Social sharing functionality

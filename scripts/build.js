@@ -18,6 +18,25 @@ Handlebars.registerHelper('formatDate', function(date) {
     });
 });
 
+// Register logical helpers
+Handlebars.registerHelper('not', function(value) {
+    return !value;
+});
+
+Handlebars.registerHelper('and', function() {
+    return Array.prototype.slice.call(arguments, 0, -1).every(Boolean);
+});
+
+// Register mod helper for ad placement
+Handlebars.registerHelper('mod', function(n, m) {
+    return n % m;
+});
+
+// Register eq helper for comparisons
+Handlebars.registerHelper('eq', function(a, b) {
+    return a === b;
+});
+
 // Load environment variables
 dotenv.config();
 
