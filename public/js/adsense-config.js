@@ -31,6 +31,126 @@ const ADSENSE_CONFIG = {
     }
 };
 
+// CSS for ad containers and fallbacks
+const adStyles = `
+    .ad-unit-container {
+        position: relative;
+        transition: opacity 0.3s ease;
+        margin: 1.5rem 0;
+        width: 100%;
+        text-align: center;
+        background: #f9f9f9;
+        padding: 1rem;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    
+    .ad-unit-container[data-ad-status="unfilled"] {
+        display: none;
+    }
+    
+    .ad-unit-container[data-ad-status="filled"] {
+        display: block;
+    }
+    
+    .ad-fallback {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f5f5f5;
+        border: 1px dashed #ddd;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .ad-unit-container[data-ad-status="unfilled"] .ad-fallback {
+        opacity: 1;
+    }
+    
+    .ad-fallback-message {
+        color: #666;
+        font-size: 14px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    /* Deal Card Ad Placement Rules */
+    .deal-card-ad {
+        grid-column: 1 / -1;
+        display: none;
+        margin: 2rem 0;
+    }
+
+    @media (min-width: 769px) {
+        .deals-grid .deal-card-ad:nth-of-type(7n) {
+            display: block;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .deals-grid .deal-card-ad:nth-of-type(4n) {
+            display: block;
+            margin: 1rem 0;
+        }
+    }
+
+    /* Deal List Top Ad */
+    .deal-list-top-ad {
+        max-width: 970px;
+        margin: 2rem auto;
+    }
+
+    @media (max-width: 1024px) {
+        .deal-list-top-ad {
+            max-width: 728px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .deal-list-top-ad {
+            max-width: 320px;
+        }
+    }
+
+    /* Deal Detail Bottom Ad */
+    .deal-detail-bottom-ad {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 100;
+        background: white;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .deal-detail-bottom-ad.hidden {
+        transform: translateY(100%);
+    }
+
+    /* Deal Detail In-Article Ad */
+    .deal-detail-ad {
+        margin: 2rem 0;
+        display: flex;
+        justify-content: center;
+    }
+`;
+
+// Add styles to document
+function injectAdStyles() {
+    const styleSheet = document.createElement('style');
+    styleSheet.textContent = adStyles;
+    document.head.appendChild(styleSheet);
+}
+
 // Get device type based on window width
 function getDeviceType() {
     const width = window.innerWidth;
@@ -39,9 +159,47 @@ function getDeviceType() {
     return 'desktop';
 }
 
+// Monitor ad status changes
+function monitorAdStatus(container, adElement) {
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.attributeName === 'data-ad-status') {
+                const status = adElement.getAttribute('data-ad-status');
+                container.setAttribute('data-ad-status', status || 'unfilled');
+                
+                if (status === 'unfilled') {
+                    console.log('Ad unfilled:', container.className);
+                }
+            }
+        });
+    });
+    
+    observer.observe(adElement, {
+        attributes: true,
+        attributeFilter: ['data-ad-status']
+    });
+    
+    // Fallback check in case the ad doesn't load
+    setTimeout(() => {
+        const status = adElement.getAttribute('data-ad-status');
+        if (!status || status === 'unfilled') {
+            container.setAttribute('data-ad-status', 'unfilled');
+        }
+    }, 3000);
+}
+
 // Initialize AdSense
 window.addEventListener('load', function() {
     window.adsbygoogle = window.adsbygoogle || [];
+    injectAdStyles();
+    
+    // Initialize all visible ad units
+    document.querySelectorAll('.ad-unit-container:not([style*="display: none"])').forEach(container => {
+        const adElement = container.querySelector('.adsbygoogle');
+        if (adElement && !loadedAds.has(adElement)) {
+            lazyLoadAd(adElement);
+        }
+    });
 });
 
 // Track loaded ad slots
@@ -49,34 +207,30 @@ const loadedAds = new WeakSet();
 
 // Ensure container has proper dimensions before loading ad
 function ensureContainerDimensions(container, type) {
-    const deviceType = getDeviceType();
-    const sizes = ADSENSE_CONFIG.sizes[type][deviceType];
-    
-    // Set minimum dimensions based on ad size
-    container.style.minWidth = sizes.width + 'px';
-    container.style.minHeight = sizes.height + 'px';
-    
-    // Ensure the container is visible and has layout
-    container.style.display = 'block';
-    container.style.overflow = 'hidden';
+    // Only set width constraints for bottom ad
+    if (type === 'dealDetailBottom') {
+        const deviceType = getDeviceType();
+        const sizes = ADSENSE_CONFIG.sizes[type][deviceType];
+        container.style.minWidth = sizes.width + 'px';
+    }
     
     // Force layout recalculation
     container.offsetHeight;
     
-    return container.offsetWidth > 0 && container.offsetHeight > 0;
+    return container.offsetWidth > 0;
 }
 
 // Lazy loading utility for ads with error handling and retries
 function lazyLoadAd(element, maxRetries = 3) {
     if (!element || !element.parentElement || loadedAds.has(element)) {
-        return; // Skip if already loaded or invalid
+        return;
     }
     
     let retryCount = 0;
     
     function tryLoadAd() {
         if (!element || !element.parentElement || loadedAds.has(element)) {
-            return; // Double-check in case conditions changed
+            return;
         }
         
         const container = element.closest('.ad-unit-container');
@@ -85,14 +239,16 @@ function lazyLoadAd(element, maxRetries = 3) {
             
         if (!type) return;
         
-        // Ensure container has proper dimensions
+        monitorAdStatus(container, element);
+        
         if (!ensureContainerDimensions(container, type)) {
             if (retryCount < maxRetries) {
                 retryCount++;
-                setTimeout(tryLoadAd, 1000); // Retry after 1 second
+                setTimeout(tryLoadAd, 1000);
                 return;
             }
             console.error('Failed to establish proper container dimensions');
+            container.setAttribute('data-ad-status', 'unfilled');
             return;
         }
         
@@ -104,6 +260,7 @@ function lazyLoadAd(element, maxRetries = 3) {
             }
         } catch (e) {
             console.error('Error loading ad:', e);
+            container.setAttribute('data-ad-status', 'unfilled');
             if (retryCount < maxRetries && !loadedAds.has(element)) {
                 retryCount++;
                 setTimeout(tryLoadAd, 1000);
@@ -126,18 +283,15 @@ function lazyLoadAd(element, maxRetries = 3) {
         
         observer.observe(element);
     } else {
-        // Fallback for browsers that don't support IntersectionObserver
         tryLoadAd();
     }
 }
 
 // Create responsive ad unit with proper sizing
 function createAdUnit(type, container) {
-    const deviceType = getDeviceType();
-    const sizes = ADSENSE_CONFIG.sizes[type][deviceType];
-    
     const adContainer = container || document.createElement('div');
     adContainer.className = `ad-unit-container ${type}-ad`;
+    adContainer.setAttribute('data-ad-status', 'unfilled');
     
     // Skip if container already has a loaded ad
     const existingAd = adContainer.querySelector('.adsbygoogle[data-ad-loaded="true"]');
@@ -145,33 +299,34 @@ function createAdUnit(type, container) {
         return adContainer;
     }
     
-    // Set container styles to ensure proper dimensions
-    adContainer.style.minWidth = sizes.width + 'px';
-    adContainer.style.minHeight = sizes.height + 'px';
-    adContainer.style.display = 'block';
-    adContainer.style.overflow = 'hidden';
+    // Only set fixed dimensions for bottom ad
+    if (type === 'dealDetailBottom') {
+        const deviceType = getDeviceType();
+        const sizes = ADSENSE_CONFIG.sizes[type][deviceType];
+        adContainer.style.minWidth = sizes.width + 'px';
+    }
     
     const ins = document.createElement('ins');
     ins.className = 'adsbygoogle';
     ins.style.display = 'block';
     ins.style.width = '100%';
-    ins.style.height = '100%';
     ins.setAttribute('data-ad-client', ADSENSE_CONFIG.clientId);
     ins.setAttribute('data-ad-slot', ADSENSE_CONFIG.slots[type]);
+    ins.setAttribute('data-ad-format', 'auto');
+    ins.setAttribute('data-full-width-responsive', 'true');
     
-    // Set specific configurations based on ad type
-    if (type === 'dealDetailBottom') {
-        ins.style.width = sizes.width + 'px';
-        ins.style.height = sizes.height + 'px';
-        ins.style.display = 'inline-block';
-    } else {
-        ins.setAttribute('data-ad-format', 'auto');
-        ins.setAttribute('data-full-width-responsive', 'true');
-    }
+    // Create fallback content
+    const fallback = document.createElement('div');
+    fallback.className = 'ad-fallback';
+    const fallbackMessage = document.createElement('div');
+    fallbackMessage.className = 'ad-fallback-message';
+    fallbackMessage.textContent = 'Advertisement';
+    fallback.appendChild(fallbackMessage);
     
-    // Clear existing content
+    // Clear existing content and add new elements
     adContainer.innerHTML = '';
     adContainer.appendChild(ins);
+    adContainer.appendChild(fallback);
     
     // Force layout recalculation
     adContainer.offsetHeight;
@@ -182,7 +337,7 @@ function createAdUnit(type, container) {
 // Handle window resize events with state tracking
 let isResizing = false;
 window.addEventListener('resize', debounce(() => {
-    if (isResizing) return; // Prevent duplicate resize handling
+    if (isResizing) return;
     isResizing = true;
     
     try {
@@ -197,7 +352,6 @@ window.addEventListener('resize', debounce(() => {
                     const deviceType = getDeviceType();
                     const sizes = ADSENSE_CONFIG.sizes[type][deviceType];
                     container.style.minWidth = sizes.width + 'px';
-                    container.style.minHeight = sizes.height + 'px';
                 } else {
                     // Create and load new ad if none exists
                     createAdUnit(type, container);
