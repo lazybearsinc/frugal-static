@@ -7,6 +7,26 @@ const registerPartials = require('./register-partials');
 const mockData = require('./mock-data');
 const cache = require('./cache');
 
+// Register JSON helper
+Handlebars.registerHelper('json', function(context) {
+    return JSON.stringify(context);
+});
+
+// Register the 'and' helper for logical AND operations
+Handlebars.registerHelper('and', function() {
+    return Array.prototype.every.call(arguments, Boolean);
+});
+
+// Register the 'eq' helper for equality comparison
+Handlebars.registerHelper('eq', function(a, b) {
+    return a === b;
+});
+
+// Register the 'mod' helper for modulo operation
+Handlebars.registerHelper('mod', function(a, b) {
+    return a % b;
+});
+
 // Register Handlebars helper for date formatting
 Handlebars.registerHelper('formatDate', function(date) {
     if (!date) return '';
@@ -21,20 +41,6 @@ Handlebars.registerHelper('formatDate', function(date) {
 // Register logical helpers
 Handlebars.registerHelper('not', function(value) {
     return !value;
-});
-
-Handlebars.registerHelper('and', function() {
-    return Array.prototype.slice.call(arguments, 0, -1).every(Boolean);
-});
-
-// Register mod helper for ad placement
-Handlebars.registerHelper('mod', function(n, m) {
-    return n % m;
-});
-
-// Register eq helper for comparisons
-Handlebars.registerHelper('eq', function(a, b) {
-    return a === b;
 });
 
 // Load environment variables
@@ -142,14 +148,29 @@ async function fetchData() {
         // Process warehouses to add slugs
         const processedWarehouses = warehouses.map(warehouse => ({
             ...warehouse,
+            id: warehouse.warehouse_id, // Explicitly set id
             slug: `${warehouse.city.toLowerCase()}-${warehouse.state.toLowerCase()}-${warehouse.warehouse_id}`,
+            lat: parseFloat(warehouse.latitude || 0), // Ensure numeric values with fallback
+            lon: parseFloat(warehouse.longitude || 0),
             deals: [] // Initialize empty deals array
         }));
+
+        // Filter out warehouses with invalid coordinates
+        const validWarehouses = processedWarehouses.filter(warehouse => 
+            !isNaN(warehouse.lat) && 
+            !isNaN(warehouse.lon) && 
+            warehouse.lat !== 0 && 
+            warehouse.lon !== 0
+        );
+
+        if (validWarehouses.length < processedWarehouses.length) {
+            console.log(`⚠️ Filtered out ${processedWarehouses.length - validWarehouses.length} warehouses with invalid coordinates`);
+        }
 
         // Fetch deals for each warehouse sequentially
         console.log('Fetching deals for warehouses sequentially...');
         
-        for (const warehouse of processedWarehouses) {
+        for (const warehouse of validWarehouses) {
             console.log(`Fetching deals for ${warehouse.city}, ${warehouse.state} (${warehouse.zip_code})`);
             
             let allDeals = [];
@@ -198,8 +219,8 @@ async function fetchData() {
         }
 
         const data = {
-            warehouses: processedWarehouses,
-            deals: processedWarehouses.flatMap(w => w.deals)
+            warehouses: validWarehouses,
+            deals: validWarehouses.flatMap(w => w.deals)
         };
 
         // Cache the data in production with timestamp
@@ -283,9 +304,7 @@ async function ensureDirectoryExists(dirPath) {
     }
 }
 
-async function generateWarehousePages(warehouses, template) {
-    console.log('🏗️ Generating warehouse pages in parallel...');
-    
+async function generateWarehouseData(warehouses) {
     // Create a simplified version of warehouse data for search
     const warehouseData = warehouses.map(w => ({
         id: w.warehouse_id,
@@ -305,36 +324,6 @@ async function generateWarehousePages(warehouses, template) {
         JSON.stringify(warehouseData, null, 2)
     );
     console.log('✓ Generated warehouses.json');
-
-    // Generate warehouse pages in parallel
-    const generateWarehousePage = async (warehouse) => {
-        const warehousePath = path.join(__dirname, '..', 'public', 'costco-deals', warehouse.slug);
-        await ensureDirectoryExists(warehousePath);
-        
-        const html = template({
-            warehouse,
-            title: `Costco Deals in ${warehouse.city} | Frugal`,
-            description: `Find the latest Costco deals and instant savings at your local ${warehouse.city} warehouse. Save money on groceries, electronics, home goods and more.`
-        });
-
-        await fs.writeFile(path.join(warehousePath, 'index.html'), html);
-        console.log(`✓ Generated warehouse page: ${warehouse.city}, ${warehouse.state}`);
-    };
-
-    // Process all warehouses in parallel with a concurrency limit
-    const CONCURRENCY_LIMIT = 5; // Adjust based on system capabilities
-    const chunks = [];
-    
-    for (let i = 0; i < warehouses.length; i += CONCURRENCY_LIMIT) {
-        const chunk = warehouses.slice(i, i + CONCURRENCY_LIMIT);
-        chunks.push(chunk);
-    }
-
-    for (const chunk of chunks) {
-        await Promise.all(chunk.map(generateWarehousePage));
-    }
-
-    console.log('✅ All warehouse pages generated successfully');
 }
 
 async function generateDealPages(warehouses, template) {
@@ -395,21 +384,50 @@ async function generateDealPages(warehouses, template) {
 }
 
 async function generateIndexPage(warehouses, template) {
-    // Use environment variables for default location, fallback to first warehouse if not set
-    const defaultZipcode = process.env.DEFAULT_ZIPCODE;
-    const defaultCountry = process.env.DEFAULT_COUNTRY || 'US';
+    // Default location (San Francisco)
+    const defaultLocation = {
+        lat: 37.7749,
+        lon: -122.4194
+    };
 
-    let defaultWarehouse;
-    if (defaultZipcode) {
-        // Find warehouse by zipcode
-        defaultWarehouse = warehouses.find(w => w.zip_code === defaultZipcode && w.country === defaultCountry);
+    // Helper function to calculate distance using Haversine formula
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371; // Earth's radius in km
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = 
+            Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c; // Distance in km
     }
-    
-    // Fallback to first warehouse if no match found
-    if (!defaultWarehouse && warehouses.length > 0) {
-        defaultWarehouse = warehouses[0];
-        console.log(`⚠️ No warehouse found for zipcode ${defaultZipcode}, using ${defaultWarehouse.city} as default`);
+
+    // Find nearest warehouse to default location
+    let nearestWarehouse = null;
+    let minDistance = Infinity;
+
+    for (const warehouse of warehouses) {
+        const lat = warehouse.lat || warehouse.latitude;
+        const lon = warehouse.lon || warehouse.longitude;
+        
+        if (lat && lon) {
+            const distance = calculateDistance(
+                defaultLocation.lat,
+                defaultLocation.lon,
+                parseFloat(lat),
+                parseFloat(lon)
+            );
+            
+            if (distance < minDistance) {
+                minDistance = distance;
+                nearestWarehouse = warehouse;
+            }
+        }
     }
+
+    // Use nearest warehouse or fall back to first warehouse
+    let defaultWarehouse = nearestWarehouse || warehouses[0];
 
     if (!defaultWarehouse) {
         console.error('❌ No warehouses available to use as default');
@@ -422,11 +440,11 @@ async function generateIndexPage(warehouses, template) {
     const html = template({
         defaultWarehouse,
         title: `Costco Deals | Find the Best Savings at Your Local Warehouse`,
-        description: `Browse the latest Costco deals and instant savings at ${defaultWarehouse.city}. Find great discounts on groceries, electronics, home goods and more.`
+        description: `Browse the latest Costco deals and instant savings. Find great discounts on groceries, electronics, home goods and more.`
     });
 
     await fs.writeFile(path.join(indexPath, 'index.html'), html);
-    console.log(`✓ Generated index page with default warehouse: ${defaultWarehouse.city}, ${defaultWarehouse.state}`);
+    console.log(`✓ Generated index page`);
 }
 
 async function ensureStaticDirectories() {
@@ -585,49 +603,34 @@ async function copyCssFiles() {
 
 async function build() {
     try {
-        console.log('🚀 Starting build process...');
-
-        // Initialize cache if enabled
-        if (CACHE_ENABLED) {
-            await cache.init();
-            console.log('📦 Cache initialized');
-        }
-
-        // Ensure static directories exist
-        console.log('📁 Creating static directories...');
-        await ensureStaticDirectories();
-
-        // Copy static assets and CSS files
-        console.log('📦 Copying static assets and CSS files...');
-        await copyStaticAssets();
-        await copyCssFiles();
-
-        // Register partials
-        console.log('📝 Registering Handlebars partials...');
+        console.log('🏗️ Starting build process...');
+        
+        // Register Handlebars partials
         await registerPartials();
-
-        // Fetch all required data
-        console.log('📦 Fetching data from API...');
-        const { warehouses } = await fetchData();
-
+        
+        // Ensure static directories exist
+        await ensureStaticDirectories();
+        
+        // Copy static assets
+        await copyStaticAssets();
+        
+        // Copy CSS files
+        await copyCssFiles();
+        
         // Load templates
-        console.log('📄 Loading templates...');
-        const indexTemplate = await loadTemplate('index');
-        const warehouseTemplate = await loadTemplate('warehouse');
         const dealTemplate = await loadTemplate('deal');
-
-        // Generate index page
-        console.log('🏗️ Generating index page...');
-        await generateIndexPage(warehouses, indexTemplate);
-
-        // Generate warehouse pages
-        console.log('🏗️ Generating warehouse pages...');
-        await generateWarehousePages(warehouses, warehouseTemplate);
-
-        // Generate deal pages
-        console.log('🏗️ Generating deal pages...');
+        const indexTemplate = await loadTemplate('index');
+        
+        // Fetch data
+        const { warehouses } = await fetchData();
+        
+        // Generate warehouse data JSON file
+        await generateWarehouseData(warehouses);
+        
+        // Generate pages
         await generateDealPages(warehouses, dealTemplate);
-
+        await generateIndexPage(warehouses, indexTemplate);
+        
         console.log('✅ Build completed successfully!');
     } catch (error) {
         console.error('❌ Build failed:', error);

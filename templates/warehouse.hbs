@@ -19,8 +19,20 @@
          crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.29.0/feather.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="/js/adsense-config.js"></script>
+    
+    <!-- Immediate console log to verify script loading -->
+    <script>
+        console.log('Initial script load check');
+    </script>
+    
+    <!-- Load warehouse locator first -->
     <script src="/js/warehouse-locator.js"></script>
+    <script>
+        console.log('Warehouse locator script loaded');
+    </script>
+    
+    <!-- Load other scripts -->
+    <script src="/js/adsense-config.js"></script>
     <link rel="stylesheet" href="/css/header-improvements.css">
     <style>
         /* Page-specific styles */
@@ -244,7 +256,7 @@
                     <strong class="warehouse-address">{{warehouse.address}}, {{warehouse.city}}</strong>
                 </div>
             </div>
-            <button class="change-warehouse">Change Warehouse</button>
+            <button class="change-warehouse" onclick="locator.showWarehouseSelectorModal(warehouses)">Change Warehouse</button>
         </div>
     </div>
 
@@ -296,42 +308,53 @@
     </main>
 
     <script>
+        console.log('Starting main script execution');
+        
         // Initialize Feather icons
         feather.replace();
 
-        // Initialize warehouse locator
-        document.addEventListener('DOMContentLoaded', async () => {
-            const locator = new WarehouseLocator();
-            
-            // Get warehouses data from the template
-            const warehouses = {{{json warehouse.allWarehouses}}};
-            
-            try {
-                // Initialize with current location
-                const { warehouse, distance } = await locator.initialize(warehouses);
+        // Initialize warehouse data and current warehouse ID
+        const currentWarehouse = {
+            id: '{{warehouse.id}}',
+            slug: '{{warehouse.slug}}',
+            city: '{{warehouse.city}}',
+            address: '{{warehouse.address}}',
+            lat: {{warehouse.lat}},
+            lon: {{warehouse.lon}}
+        };
+        const warehouses = {{{json allWarehouses}}};
+        let locator = new WarehouseLocator();
+
+        // Only save current warehouse to localStorage if none exists
+        if (!locator.getSelectedWarehouse()) {
+            console.log('No warehouse in localStorage, setting current warehouse');
+            locator.setSelectedWarehouse(currentWarehouse);
+        }
+
+        // Handle change warehouse button
+        document.querySelector('.change-warehouse').addEventListener('click', function() {
+            locator.showWarehouseSelectorModal(warehouses);
+        });
+
+        // Get user location to show distance
+        locator.getUserLocation().then(userLocation => {
+            if (userLocation && currentWarehouse.lat && currentWarehouse.lon) {
+                const distance = locator.haversineDistance(
+                    userLocation.lat,
+                    userLocation.lon,
+                    currentWarehouse.lat,
+                    currentWarehouse.lon
+                );
                 
-                if (warehouse && warehouse.id !== '{{warehouse.id}}') {
-                    // If nearest warehouse is different from current, show suggestion
-                    const changeWarehouse = confirm(
-                        `We found a Costco warehouse closer to you in ${warehouse.city} ` +
-                        `(${distance.toFixed(1)} km away). Would you like to switch to that location?`
-                    );
-                    
-                    if (changeWarehouse) {
-                        window.location.href = `/costco-deals/${warehouse.slug}`;
-                    }
-                }
-                
-                // Update distance display if on current warehouse
-                if (warehouse && warehouse.id === '{{warehouse.id}}' && distance) {
+                if (distance !== null) {
                     const warehouseLabel = document.querySelector('.warehouse-label');
                     if (warehouseLabel) {
                         warehouseLabel.textContent = `Your Costco Warehouse (${distance.toFixed(1)} km away)`;
                     }
                 }
-            } catch (error) {
-                console.error('Error initializing warehouse locator:', error);
             }
+        }).catch(error => {
+            console.error('Error getting user location:', error);
         });
 
         // Responsive ad placement with lazy loading
@@ -423,7 +446,5 @@
             </div>
         </div>
     </footer>
-
-    <script src="/js/enhanced-warehouse.js"></script>
 </body>
 </html> 

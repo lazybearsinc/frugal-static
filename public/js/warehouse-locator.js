@@ -8,17 +8,36 @@ class WarehouseLocator {
      * @param {number} config.maxDistance - Maximum distance in km to consider a warehouse "nearby"
      */
     constructor(config = {}) {
-        // Earth's radius in kilometers
+        console.log('WarehouseLocator: Initializing...', config);
         this.EARTH_RADIUS = 6371.0;
-        
-        // Default location (configurable, defaults to San Francisco)
-        this.defaultLocation = config.defaultLocation || {
-            lat: 37.7749,
-            lon: -122.4194
-        };
-
-        // Maximum distance to consider a warehouse "nearby" (in km)
+        this.defaultLocation = config.defaultLocation || { lat: 37.7749, lon: -122.4194 };
         this.maxDistance = config.maxDistance || 100;
+        this.warehouses = null; // Cache for warehouse data
+        console.log('WarehouseLocator: Initialized with config:', {
+            defaultLocation: this.defaultLocation,
+            maxDistance: this.maxDistance
+        });
+    }
+
+    /**
+     * Fetch warehouse data dynamically from warehouses.json
+     * @returns {Promise<Array>} Array of warehouse objects
+     */
+    async fetchWarehouses() {
+        if (this.warehouses) {
+            return this.warehouses; // Return cached data if available
+        }
+        try {
+            const response = await fetch('/data/warehouses.json');
+            if (!response.ok) {
+                throw new Error('Failed to load warehouse data');
+            }
+            this.warehouses = await response.json();
+            return this.warehouses;
+        } catch (error) {
+            console.error('Error fetching warehouses:', error);
+            return []; // Return empty array as fallback
+        }
     }
 
     /**
@@ -42,32 +61,25 @@ class WarehouseLocator {
 
     /**
      * Calculate the great-circle distance between two points using the Haversine formula
-     * @param {number} lat1 - Latitude of first point in decimal degrees
-     * @param {number} lon1 - Longitude of first point in decimal degrees
-     * @param {number} lat2 - Latitude of second point in decimal degrees
-     * @param {number} lon2 - Longitude of second point in decimal degrees
-     * @returns {number|null} Distance in kilometers or null if coordinates are invalid
+     * @param {number} lat1 - Latitude of first point
+     * @param {number} lon1 - Longitude of first point
+     * @param {number} lat2 - Latitude of second point
+     * @param {number} lon2 - Longitude of second point
+     * @returns {number|null} Distance in kilometers or null if invalid
      */
     haversineDistance(lat1, lon1, lat2, lon2) {
-        // Validate coordinates
         if (!this.isValidCoordinates(lat1, lon1) || !this.isValidCoordinates(lat2, lon2)) {
             console.warn('Invalid coordinates provided to haversineDistance');
             return null;
         }
-
         try {
-            // Convert lat/long to radians
             const phi1 = this.toRadians(lat1);
             const phi2 = this.toRadians(lat2);
             const deltaPhi = this.toRadians(lat2 - lat1);
             const deltaLambda = this.toRadians(lon2 - lon1);
-
-            // Haversine formula
             const a = Math.sin(deltaPhi / 2) ** 2 +
-                     Math.cos(phi1) * Math.cos(phi2) *
-                     Math.sin(deltaLambda / 2) ** 2;
+                     Math.cos(phi1) * Math.cos(phi2) * Math.sin(deltaLambda / 2) ** 2;
             const c = 2 * Math.asin(Math.sqrt(a));
-
             return this.EARTH_RADIUS * c;
         } catch (error) {
             console.error('Error calculating distance:', error);
@@ -88,49 +100,35 @@ class WarehouseLocator {
      * Find all warehouses within the minimum distance from a reference point
      * @param {number} referenceLat - Reference latitude
      * @param {number} referenceLon - Reference longitude
-     * @param {Array} locations - Array of warehouse objects with lat and lon properties
      * @returns {Object} Object containing nearest warehouses and their distances
      */
-    findNearestWarehouses(referenceLat, referenceLon, locations) {
+    async findNearestWarehouses(referenceLat, referenceLon) {
         if (!this.isValidCoordinates(referenceLat, referenceLon)) {
             throw new Error('Invalid reference coordinates');
         }
-
+        const warehouses = await this.fetchWarehouses();
         let minDistance = Infinity;
         let nearestWarehouses = [];
-
-        // First pass: find minimum distance
-        locations.forEach(warehouse => {
+        
+        warehouses.forEach(warehouse => {
             if (!this.isValidCoordinates(warehouse.lat, warehouse.lon)) {
                 console.warn(`Invalid coordinates for warehouse: ${warehouse.name || 'unnamed'}`);
                 return;
             }
-
-            const distance = this.haversineDistance(
-                referenceLat,
-                referenceLon,
-                warehouse.lat,
-                warehouse.lon
-            );
-
+            const distance = this.haversineDistance(referenceLat, referenceLon, warehouse.lat, warehouse.lon);
             if (distance === null) return;
-
             if (distance < minDistance) {
                 minDistance = distance;
                 nearestWarehouses = [{ warehouse, distance }];
-            } else if (Math.abs(distance - minDistance) < 0.1) { // Consider warehouses within 100m as equidistant
+            } else if (Math.abs(distance - minDistance) < 0.1) {
                 nearestWarehouses.push({ warehouse, distance });
             }
         });
-
-        // Sort by additional criteria if multiple warehouses at same distance
+        
         if (nearestWarehouses.length > 1) {
-            nearestWarehouses.sort((a, b) => {
-                // Sort by name if distances are equal
-                return a.warehouse.name?.localeCompare(b.warehouse.name || '') || 0;
-            });
+            nearestWarehouses.sort((a, b) => a.warehouse.name?.localeCompare(b.warehouse.name || '') || 0);
         }
-
+        
         return {
             warehouses: nearestWarehouses,
             distance: minDistance
@@ -147,30 +145,20 @@ class WarehouseLocator {
                 reject(new Error('Geolocation is not supported by your browser'));
                 return;
             }
-
             navigator.geolocation.getCurrentPosition(
                 position => {
-                    const coords = {
-                        lat: position.coords.latitude,
-                        lon: position.coords.longitude
-                    };
-
+                    const coords = { lat: position.coords.latitude, lon: position.coords.longitude };
                     if (!this.isValidCoordinates(coords.lat, coords.lon)) {
                         resolve(this.defaultLocation);
                         return;
                     }
-
                     resolve(coords);
                 },
                 error => {
                     console.warn('Error getting location:', error.message);
                     resolve(this.defaultLocation);
                 },
-                {
-                    enableHighAccuracy: true,
-                    timeout: 5000,
-                    maximumAge: 0
-                }
+                { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
             );
         });
     }
@@ -182,8 +170,6 @@ class WarehouseLocator {
      */
     serializeWarehouse(warehouse) {
         if (!warehouse) return null;
-
-        // Only include essential, serializable properties
         return {
             id: warehouse.id,
             name: warehouse.name,
@@ -196,31 +182,124 @@ class WarehouseLocator {
     }
 
     /**
-     * Initialize warehouse location handling
-     * @param {Array} warehouses - Array of warehouse objects
+     * Check if this is the user's first visit
+     * @returns {boolean} True if no warehouse is selected
+     */
+    isFirstVisit() {
+        return !this.getSelectedWarehouse();
+    }
+
+    /**
+     * Show warehouse selector modal with dynamically fetched data
+     */
+    async showWarehouseSelectorModal() {
+        const warehouses = await this.fetchWarehouses();
+        if (!warehouses || warehouses.length === 0) {
+            console.error('No warehouses available to display');
+            return;
+        }
+        
+        const modal = document.createElement('div');
+        modal.className = 'warehouse-modal';
+        modal.innerHTML = `
+            <div class="warehouse-modal-content">
+                <button class="close-modal" aria-label="Close modal">×</button>
+                <h2>Select Your Costco Warehouse</h2>
+                <div class="warehouse-search">
+                    <input type="text" placeholder="Search by city or zip code" id="warehouseSearch">
+                </div>
+                <div class="warehouse-list">
+                    ${warehouses.map(w => `
+                        <div class="warehouse-item" data-slug="${w.slug}">
+                            <div class="warehouse-item-info">
+                                <strong>${w.city}, ${w.state}</strong>
+                                <span>${w.address}</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+
+        const styles = document.createElement('style');
+        styles.textContent = `
+            .warehouse-modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+            .warehouse-modal-content { background: white; padding: 2rem; border-radius: 12px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; position: relative; }
+            .close-modal { position: absolute; top: 1rem; right: 1rem; font-size: 1.5rem; border: none; background: none; cursor: pointer; padding: 0.5rem; }
+            .close-modal:hover { opacity: 0.7; }
+            .warehouse-search { margin: 1rem 0; }
+            .warehouse-search input { width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; }
+            .warehouse-list { max-height: 400px; overflow-y: auto; }
+            .warehouse-item { padding: 1rem; border: 1px solid #eee; margin: 0.5rem 0; border-radius: 6px; cursor: pointer; transition: background-color 0.2s ease; }
+            .warehouse-item:hover { background: #f9f9f9; }
+            .warehouse-item-info { display: flex; flex-direction: column; gap: 0.25rem; }
+        `;
+        document.head.appendChild(styles);
+
+        // Close modal handlers
+        const closeModal = () => {
+            document.body.removeChild(modal);
+        };
+
+        modal.querySelector('.close-modal').addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+
+        // Warehouse selection handler
+        modal.querySelectorAll('.warehouse-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const slug = item.dataset.slug;
+                const warehouse = warehouses.find(w => w.slug === slug);
+                if (warehouse) {
+                    this.setSelectedWarehouse(warehouse);
+                    window.location.href = `/costco-deals/${slug}`;
+                }
+                closeModal();
+            });
+        });
+
+        // Search functionality
+        const searchInput = modal.querySelector('#warehouseSearch');
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            modal.querySelectorAll('.warehouse-item').forEach(item => {
+                const warehouse = warehouses.find(w => w.slug === item.dataset.slug);
+                const searchText = `${warehouse.city} ${warehouse.state} ${warehouse.zip_code || ''}`.toLowerCase();
+                item.style.display = searchText.includes(query) ? 'block' : 'none';
+            });
+        });
+
+        document.body.appendChild(modal);
+    }
+
+    /**
+     * Initialize warehouse location handling with first visit check
      * @returns {Promise} Resolves with the nearest warehouse
      */
-    async initialize(warehouses) {
+    async initialize() {
+        console.log('WarehouseLocator: Starting initialization');
         try {
-            if (!warehouses || !Array.isArray(warehouses) || warehouses.length === 0) {
+            const warehouses = await this.fetchWarehouses();
+            if (!warehouses || warehouses.length === 0) {
+                console.error('No warehouse data available');
                 throw new Error('No warehouse data available');
             }
 
-            // Get user's location
-            const userLocation = await this.getUserLocation();
+            const currentPath = window.location.pathname;
+            const isDealsListPage = currentPath === '/costco-deals/' || currentPath === '/costco-deals';
             
-            // Find nearest warehouses
-            const result = this.findNearestWarehouses(
-                userLocation.lat,
-                userLocation.lon,
-                warehouses
-            );
+            if (isDealsListPage && this.isFirstVisit()) {
+                console.log('Showing warehouse selector modal');
+                await this.showWarehouseSelectorModal();
+                return null;
+            }
 
-            // Get the closest warehouse (first one after sorting)
+            const userLocation = await this.getUserLocation();
+            const result = await this.findNearestWarehouses(userLocation.lat, userLocation.lon);
             const nearest = result.warehouses[0];
 
             if (nearest && nearest.warehouse) {
-                // Only store if within maximum distance
                 if (nearest.distance <= this.maxDistance) {
                     const serializedWarehouse = this.serializeWarehouse(nearest.warehouse);
                     if (serializedWarehouse) {
@@ -228,23 +307,18 @@ class WarehouseLocator {
                         localStorage.setItem('warehouseDistance', nearest.distance.toFixed(1));
                     }
                 }
-
                 return {
                     warehouse: nearest.warehouse,
                     distance: nearest.distance,
-                    alternativeWarehouses: result.warehouses.slice(1) // Other equidistant warehouses
+                    alternativeWarehouses: result.warehouses.slice(1)
                 };
             }
 
             throw new Error('No valid warehouses found');
         } catch (error) {
-            console.error('Error initializing warehouse locator:', error);
-            
-            // Return the first valid warehouse as fallback
-            const fallbackWarehouse = warehouses.find(w => 
-                this.isValidCoordinates(w.lat, w.lon)
-            );
-
+            console.error('Error during initialization:', error);
+            const warehouses = await this.fetchWarehouses();
+            const fallbackWarehouse = warehouses.find(w => this.isValidCoordinates(w.lat, w.lon));
             return {
                 warehouse: fallbackWarehouse || null,
                 distance: null,
@@ -285,4 +359,10 @@ class WarehouseLocator {
             return false;
         }
     }
-} 
+}
+
+// Initialize the warehouse locator when the DOM is ready
+document.addEventListener('DOMContentLoaded', async () => {
+    const locator = new WarehouseLocator();
+    await locator.initialize();
+}); 
