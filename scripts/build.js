@@ -192,6 +192,7 @@ async function fetchData() {
                     title: deal.product_title || deal.description,
                     slug: `${deal.item_number}-${slugify(deal.description)}`,
                     savings: formatPrice(deal.instant_saving, deal.country),
+                    savingsValue: deal.instant_saving, // Numerical value
                     imageUrl: deal.product_image_url || deal.image_url || '/images/placeholder.svg',
                     finalPrice: formatPrice(deal.final_price, deal.country),
                     originalPrice: formatPrice(deal.product_current_price, deal.country),
@@ -325,7 +326,21 @@ async function generateWarehouseData(warehouses) {
     );
     console.log('✓ Generated warehouses.json');
 }
-
+async function generateWarehousePages(warehouses, template) {
+    console.log('🏗️ Generating warehouse pages...');
+    await Promise.all(warehouses.map(async (warehouse) => {
+        const warehousePath = path.join(__dirname, '..', 'public', 'costco-deals', warehouse.slug);
+        await ensureDirectoryExists(warehousePath);
+        const html = template({
+            warehouse,
+            title: `Costco Deals in ${warehouse.city}, ${warehouse.state} | Frugal`,
+            description: `Browse the latest deals and savings at Costco ${warehouse.city}, ${warehouse.state}.`
+        });
+        await fs.writeFile(path.join(warehousePath, 'index.html'), html);
+        console.log(`✓ Generated warehouse page: ${warehouse.city}, ${warehouse.state}`);
+    }));
+    console.log('✅ All warehouse pages generated');
+}
 async function generateDealPages(warehouses, template) {
     console.log('🏗️ Generating deal pages in parallel...');
     
@@ -352,6 +367,7 @@ async function generateDealPages(warehouses, template) {
                 endDate: formattedEndDate
             },
             warehouse,
+            allWarehouses: warehouses,
             title: `${deal.title} Deal at ${warehouse.city} Costco | Frugal`,
             description: `Save ${deal.savings} on ${deal.title} at Costco ${warehouse.city}. Limited time offer, valid through ${formattedEndDate}.`
         });
@@ -384,50 +400,8 @@ async function generateDealPages(warehouses, template) {
 }
 
 async function generateIndexPage(warehouses, template) {
-    // Default location (San Francisco)
-    const defaultLocation = {
-        lat: 37.7749,
-        lon: -122.4194
-    };
-
-    // Helper function to calculate distance using Haversine formula
-    function calculateDistance(lat1, lon1, lat2, lon2) {
-        const R = 6371; // Earth's radius in km
-        const dLat = (lat2 - lat1) * Math.PI / 180;
-        const dLon = (lon2 - lon1) * Math.PI / 180;
-        const a = 
-            Math.sin(dLat/2) * Math.sin(dLat/2) +
-            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-            Math.sin(dLon/2) * Math.sin(dLon/2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        return R * c; // Distance in km
-    }
-
-    // Find nearest warehouse to default location
-    let nearestWarehouse = null;
-    let minDistance = Infinity;
-
-    for (const warehouse of warehouses) {
-        const lat = warehouse.lat || warehouse.latitude;
-        const lon = warehouse.lon || warehouse.longitude;
-        
-        if (lat && lon) {
-            const distance = calculateDistance(
-                defaultLocation.lat,
-                defaultLocation.lon,
-                parseFloat(lat),
-                parseFloat(lon)
-            );
-            
-            if (distance < minDistance) {
-                minDistance = distance;
-                nearestWarehouse = warehouse;
-            }
-        }
-    }
-
-    // Use nearest warehouse or fall back to first warehouse
-    let defaultWarehouse = nearestWarehouse || warehouses[0];
+    // Simply use the first warehouse as default instead of calculating distance
+    const defaultWarehouse = warehouses[0];
 
     if (!defaultWarehouse) {
         console.error('❌ No warehouses available to use as default');
@@ -439,6 +413,7 @@ async function generateIndexPage(warehouses, template) {
 
     const html = template({
         defaultWarehouse,
+        allWarehouses: warehouses,
         title: `Costco Deals | Find the Best Savings at Your Local Warehouse`,
         description: `Browse the latest Costco deals and instant savings. Find great discounts on groceries, electronics, home goods and more.`
     });
@@ -480,8 +455,8 @@ async function copyCssFiles() {
     const cssDir = path.join(__dirname, '..', 'public', 'css');
     await ensureDirectoryExists(cssDir);
 
-    // Copy header-improvements.css
-    const headerCssContent = `
+// Copy header-improvements.css
+const headerCssContent = `
 :root {
     --primary-color: #1A365D;
     --primary-hover: #234876;
@@ -595,6 +570,98 @@ async function copyCssFiles() {
         align-items: flex-start;
     }
 }
+
+/* Warehouse modal styles */
+.warehouse-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.warehouse-modal-content {
+    background-color: white;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.warehouse-modal h2 {
+    font-size: 1.5rem;
+    margin: 0 0 16px 0;
+    color: var(--primary-color);
+}
+
+.warehouse-modal .search-container {
+    margin-bottom: 16px;
+}
+
+.warehouse-modal #searchInput {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 1rem;
+    margin-bottom: 8px;
+}
+
+.warehouse-modal #warehouseList {
+    overflow-y: auto;
+    max-height: 50vh;
+    border-top: 1px solid var(--border-color);
+    padding-top: 16px;
+}
+
+.warehouse-modal .warehouse-item {
+    padding: 12px;
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.warehouse-modal .warehouse-item:hover {
+    background-color: #f5f7fa;
+}
+
+.warehouse-modal .close-modal {
+    margin-top: 20px;
+    padding: 12px;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.2s;
+}
+
+.warehouse-modal .close-modal:hover {
+    background-color: var(--primary-hover);
+}
+
+@media (max-width: 768px) {
+    .warehouse-modal-content {
+        width: 95%;
+        max-height: 90vh;
+        padding: 16px;
+    }
+    
+    .warehouse-modal #warehouseList {
+        max-height: 60vh;
+    }
+}
 `;
 
     await fs.writeFile(path.join(cssDir, 'header-improvements.css'), headerCssContent.trim());
@@ -620,6 +687,7 @@ async function build() {
         // Load templates
         const dealTemplate = await loadTemplate('deal');
         const indexTemplate = await loadTemplate('index');
+        const warehouseTemplate = await loadTemplate('warehouse');
         
         // Fetch data
         const { warehouses } = await fetchData();
@@ -629,6 +697,7 @@ async function build() {
         
         // Generate pages
         await generateDealPages(warehouses, dealTemplate);
+        await generateWarehousePages(warehouses, warehouseTemplate);
         await generateIndexPage(warehouses, indexTemplate);
         
         console.log('✅ Build completed successfully!');

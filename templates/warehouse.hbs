@@ -256,8 +256,7 @@
                     <strong class="warehouse-address">{{warehouse.address}}, {{warehouse.city}}</strong>
                 </div>
             </div>
-            <button class="change-warehouse" onclick="locator.showWarehouseSelectorModal(warehouses)">Change Warehouse</button>
-        </div>
+<button class="change-warehouse" >Change Warehouse</button>        </div>
     </div>
 
     {{> deal_list_top_ad}}
@@ -276,6 +275,7 @@
     </div>
 
     <main class="deals-grid">
+        {{#if warehouse.deals.length}}
         {{#each warehouse.deals}}
             <a href="/costco-deals/{{../warehouse.slug}}/{{this.slug}}" class="deal-card">
                 <img src="{{this.imageUrl}}" 
@@ -305,6 +305,9 @@
                 {{> deal_card_ad}}
             {{/if}}
         {{/each}}
+        {{else}}
+        <p>No deals available for this warehouse.</p>
+    {{/if}}
     </main>
 
     <script>
@@ -325,36 +328,11 @@
         const warehouses = {{{json allWarehouses}}};
         let locator = new WarehouseLocator();
 
-        // Only save current warehouse to localStorage if none exists
-        if (!locator.getSelectedWarehouse()) {
-            console.log('No warehouse in localStorage, setting current warehouse');
-            locator.setSelectedWarehouse(currentWarehouse);
-        }
+
 
         // Handle change warehouse button
         document.querySelector('.change-warehouse').addEventListener('click', function() {
             locator.showWarehouseSelectorModal(warehouses);
-        });
-
-        // Get user location to show distance
-        locator.getUserLocation().then(userLocation => {
-            if (userLocation && currentWarehouse.lat && currentWarehouse.lon) {
-                const distance = locator.haversineDistance(
-                    userLocation.lat,
-                    userLocation.lon,
-                    currentWarehouse.lat,
-                    currentWarehouse.lon
-                );
-                
-                if (distance !== null) {
-                    const warehouseLabel = document.querySelector('.warehouse-label');
-                    if (warehouseLabel) {
-                        warehouseLabel.textContent = `Your Costco Warehouse (${distance.toFixed(1)} km away)`;
-                    }
-                }
-            }
-        }).catch(error => {
-            console.error('Error getting user location:', error);
         });
 
         // Responsive ad placement with lazy loading

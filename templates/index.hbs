@@ -84,51 +84,28 @@
     </div>
 </header>
 
-<script>
-    document.addEventListener('DOMContentLoaded', async function() {
-        try {
-            // Initialize the locator
-            const locator = new WarehouseLocator();
-            
-            // Check if user has a selected warehouse
-            const selectedWarehouse = locator.getSelectedWarehouse();
-            
-            if (selectedWarehouse) {
-                // If user has a selected warehouse, redirect to that warehouse's page
-                window.location.href = `/costco-deals/${selectedWarehouse.slug}`;
-            } else {
-                // If no warehouse is selected, show the selector modal
-                locator.showWarehouseSelectorModal();
-            }
-
-            // Also handle manual warehouse selection button
-            document.getElementById('selectWarehouse').addEventListener('click', function() {
-                locator.showWarehouseSelectorModal();
-            });
-        } catch (error) {
-            console.error('Error initializing warehouse selection:', error);
-        }
-    });
-</script>
 
 {{> deal_list_top_ad}}
 
 <div class="filters">
     <div class="filter-group">
-        <button class="filter-button active">All Savings</button>
-        <button class="filter-button">$0-$10</button>
-        <button class="filter-button">$10-$50</button>
-        <button class="filter-button">$50+</button>
+        <button class="filter-button active" data-filter="all">All Savings</button>
+        <button class="filter-button" data-filter="range" data-min="0" data-max="10">$0-$10</button>
+        <button class="filter-button" data-filter="range" data-min="10" data-max="50">$10-$50</button>
+        <button class="filter-button" data-filter="range" data-min="50" data-max="Infinity">$50+</button>
     </div>
     <div class="filter-group">
-        <button class="filter-button">Ending Soon</button>
-        <button class="filter-button">Highest Savings</button>
+        <button class="filter-button" data-sort="ending-soon">Ending Soon</button>
+        <button class="filter-button" data-sort="highest-savings">Highest Savings</button>
     </div>
 </div>
 
 <main class="deals-grid">
     {{#each defaultWarehouse.deals}}
-        <a href="/costco-deals/{{../defaultWarehouse.slug}}/{{this.slug}}" class="deal-card">
+     <a href="/costco-deals/{{../warehouse.slug}}/{{this.slug}}" 
+   class="deal-card" 
+   data-savings="{{this.savingsValue}}" 
+   data-days-left="{{this.daysLeft}}">
             <img src="{{this.imageUrl}}" 
                  alt="{{this.title}}" 
                  class="deal-image"
@@ -158,37 +135,109 @@
     {{/each}}
 </main>
 
+
 <script src="/js/enhanced-warehouse.js"></script>
 <script>
-    // Responsive ad placement
-    function adjustAdPlacement() {
-        const dealCards = document.querySelectorAll('.deal-card');
-        const adContainers = document.querySelectorAll('.deal-card-ad');
-        
-        // Remove existing ads
-        adContainers.forEach(ad => ad.remove());
-        
-        const isMobile = window.innerWidth <= 768;
-        const adInterval = isMobile ? 3 : 6;
-        
-        dealCards.forEach((card, index) => {
-            if (index > 0 && (index + 1) % adInterval === 0) {
-                const adElement = document.createElement('div');
-                adElement.innerHTML = `{{> deal_card_ad}}`;
-                card.after(adElement.firstElementChild);
-            }
-        });
-    }
+    const filterButtons = document.querySelectorAll('.filter-button');
+const dealsGrid = document.querySelector('.deals-grid');
 
-    // Initial placement
-    adjustAdPlacement();
-    
-    // Adjust on resize
-    let resizeTimer;
-    window.addEventListener('resize', () => {
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(adjustAdPlacement, 250);
+function sortDeals(criteria) {
+    const dealCards = Array.from(dealsGrid.querySelectorAll('.deal-card'));
+    if (criteria === 'ending-soon') {
+        dealCards.sort((a, b) => parseInt(a.getAttribute('data-days-left')) - parseInt(b.getAttribute('data-days-left')));
+    } else if (criteria === 'highest-savings') {
+        dealCards.sort((a, b) => parseFloat(b.getAttribute('data-savings')) - parseFloat(a.getAttribute('data-savings')));
+    }
+    dealsGrid.innerHTML = '';
+    dealCards.forEach(card => dealsGrid.appendChild(card));
+}
+
+filterButtons.forEach(button => {
+    button.addEventListener('click', function() {
+        filterButtons.forEach(btn => btn.classList.remove('active'));
+        this.classList.add('active');
+
+        const filterType = this.getAttribute('data-filter');
+        const sortCriteria = this.getAttribute('data-sort');
+
+        if (filterType === 'all') {
+            document.querySelectorAll('.deal-card').forEach(card => card.style.display = 'block');
+        } else if (filterType === 'range') {
+            const min = parseFloat(this.getAttribute('data-min'));
+            const max = this.getAttribute('data-max') === 'Infinity' ? Infinity : parseFloat(this.getAttribute('data-max'));
+            document.querySelectorAll('.deal-card').forEach(card => {
+                const savings = parseFloat(card.getAttribute('data-savings'));
+                card.style.display = (savings >= min && savings < max) ? 'block' : 'none';
+            });
+        } else if (sortCriteria) {
+            sortDeals(sortCriteria);
+        }
     });
+});
+
 </script>
+<script>
+        // Responsive ad placement
+        function adjustAdPlacement() {
+            const dealCards = document.querySelectorAll('.deal-card');
+            const adContainers = document.querySelectorAll('.deal-card-ad');
+
+            // Remove existing ads
+            adContainers.forEach(ad => ad.remove());
+
+            const isMobile = window.innerWidth <= 768;
+            const adInterval = isMobile ? 3 : 6;
+
+            dealCards.forEach((card, index) => {
+                if (index > 0 && (index + 1) % adInterval === 0) {
+                    // Create ad container
+                    const adContainer = document.createElement('div');
+                    adContainer.className = 'ad-unit-container deal-card-ad';
+                    adContainer.setAttribute('data-ad-status', 'unfilled');
+
+                    // Create ins element for AdSense
+                    const ins = document.createElement('ins');
+                    ins.className = 'adsbygoogle';
+                    ins.style.display = 'block';
+                    ins.setAttribute('data-ad-client', 'ca-pub-7930233358759132');
+                    ins.setAttribute('data-ad-slot', '2522373517');
+                    ins.setAttribute('data-ad-format', 'auto');
+                    ins.setAttribute('data-full-width-responsive', 'true');
+
+                    // Create fallback div
+                    const fallback = document.createElement('div');
+                    fallback.className = 'ad-fallback';
+                    fallback.style.display = 'none';
+                    fallback.textContent = 'No ad available';
+
+                    // Append elements to container
+                    adContainer.appendChild(ins);
+                    adContainer.appendChild(fallback);
+
+                    // Insert after the current card
+                    card.parentNode.insertBefore(adContainer, card.nextSibling);
+
+                    // Load the ad
+                    try {
+                        (adsbygoogle = window.adsbygoogle || []).push({});
+                    } catch (e) {
+                        console.error('Error loading ad:', e);
+                        adContainer.setAttribute('data-ad-status', 'unfilled');
+                    }
+                }
+            });
+        }
+
+    window.addEventListener('load', () => {
+    adjustAdPlacement();
+});
+        // Adjust on resize
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(adjustAdPlacement, 250);
+        });
+    </script>
+    
 </body>
 </html> 

@@ -53,24 +53,23 @@ const adStyles = `
         display: block;
     }
     
-    .ad-fallback {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: #f5f5f5;
-        border: 1px dashed #ddd;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
+ .ad-fallback {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    align-items: center;
+    justify-content: center;
+    background: #f5f5f5;
+    border: 1px dashed #ddd;
+}
+
+.ad-unit-container[data-ad-status="unfilled"] .ad-fallback {
+    display: flex;
+}
     
-    .ad-unit-container[data-ad-status="unfilled"] .ad-fallback {
-        opacity: 1;
-    }
     
     .ad-fallback-message {
         color: #666;
@@ -222,118 +221,51 @@ function ensureContainerDimensions(container, type) {
 
 // Lazy loading utility for ads with error handling and retries
 function lazyLoadAd(element, maxRetries = 3) {
-    if (!element || !element.parentElement || loadedAds.has(element)) {
-        return;
-    }
-    
     let retryCount = 0;
-    
-    function tryLoadAd() {
-        if (!element || !element.parentElement || loadedAds.has(element)) {
-            return;
-        }
-        
-        const container = element.closest('.ad-unit-container');
-        const type = Object.keys(ADSENSE_CONFIG.slots).find(key => 
-            container.classList.contains(`${key}-ad`));
-            
-        if (!type) return;
-        
-        monitorAdStatus(container, element);
-        
-        if (!ensureContainerDimensions(container, type)) {
+    function tryLoad() {
+        try {
+            (window.adsbygoogle = window.adsbygoogle || []).push({});
+        } catch (e) {
             if (retryCount < maxRetries) {
                 retryCount++;
-                setTimeout(tryLoadAd, 1000);
-                return;
-            }
-            console.error('Failed to establish proper container dimensions');
-            container.setAttribute('data-ad-status', 'unfilled');
-            return;
-        }
-        
-        try {
-            if (!element.getAttribute('data-ad-loaded')) {
-                (adsbygoogle = window.adsbygoogle || []).push({});
-                element.setAttribute('data-ad-loaded', 'true');
-                loadedAds.add(element);
-            }
-        } catch (e) {
-            console.error('Error loading ad:', e);
-            container.setAttribute('data-ad-status', 'unfilled');
-            if (retryCount < maxRetries && !loadedAds.has(element)) {
-                retryCount++;
-                setTimeout(tryLoadAd, 1000);
+                setTimeout(tryLoad, 1000);
+            } else {
+                element.parentElement.setAttribute('data-ad-status', 'unfilled');
             }
         }
     }
-    
-    if ('IntersectionObserver' in window) {
-        const observer = new IntersectionObserver((entries, observer) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting && !loadedAds.has(element)) {
-                    tryLoadAd();
-                    observer.unobserve(entry.target);
-                }
-            });
-        }, {
-            rootMargin: '50px 0px',
-            threshold: 0.1
-        });
-        
-        observer.observe(element);
-    } else {
-        tryLoadAd();
-    }
+    const observer = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting) {
+            tryLoad();
+            observer.unobserve(element);
+        }
+    }, { rootMargin: '50px' });
+    observer.observe(element);
 }
-
 // Create responsive ad unit with proper sizing
 function createAdUnit(type, container) {
     const adContainer = container || document.createElement('div');
     adContainer.className = `ad-unit-container ${type}-ad`;
     adContainer.setAttribute('data-ad-status', 'unfilled');
-    
-    // Skip if container already has a loaded ad
-    const existingAd = adContainer.querySelector('.adsbygoogle[data-ad-loaded="true"]');
-    if (existingAd && loadedAds.has(existingAd)) {
-        return adContainer;
-    }
-    
-    // Only set fixed dimensions for bottom ad
-    if (type === 'dealDetailBottom') {
-        const deviceType = getDeviceType();
-        const sizes = ADSENSE_CONFIG.sizes[type][deviceType];
-        adContainer.style.minWidth = sizes.width + 'px';
-    }
-    
+
     const ins = document.createElement('ins');
     ins.className = 'adsbygoogle';
     ins.style.display = 'block';
-    ins.style.width = '100%';
     ins.setAttribute('data-ad-client', ADSENSE_CONFIG.clientId);
     ins.setAttribute('data-ad-slot', ADSENSE_CONFIG.slots[type]);
     ins.setAttribute('data-ad-format', 'auto');
     ins.setAttribute('data-full-width-responsive', 'true');
-    
-    // Create fallback content
+
     const fallback = document.createElement('div');
     fallback.className = 'ad-fallback';
-    const fallbackMessage = document.createElement('div');
-    fallbackMessage.className = 'ad-fallback-message';
-    fallbackMessage.textContent = 'Advertisement';
-    fallback.appendChild(fallbackMessage);
-    
-    // Clear existing content and add new elements
-    adContainer.innerHTML = '';
+    fallback.textContent = 'No ad available';
+
     adContainer.appendChild(ins);
     adContainer.appendChild(fallback);
-    
-    // Force layout recalculation
-    adContainer.offsetHeight;
-    
+
+    lazyLoadAd(ins);
     return adContainer;
 }
-
 // Handle window resize events with state tracking
 let isResizing = false;
 window.addEventListener('resize', debounce(() => {
