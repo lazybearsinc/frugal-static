@@ -1,57 +1,66 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Handle filter buttons
     const filterButtons = document.querySelectorAll('.filter-button');
-    filterButtons.forEach(button => {
-        button.addEventListener('click', handleFilter);
-    });
-});
-
-function handleFilter() {
-    // Remove active class from all buttons in the group
-    const group = this.closest('.filter-group');
-    group.querySelectorAll('.filter-button').forEach(btn => {
-        btn.classList.remove('active');
-    });
+    const searchInput = document.getElementById('searchInput');
+    const clearSearch = document.getElementById('clearSearch');
     
-    // Add active class to clicked button
-    this.classList.add('active');
-    
-    // Get all deal cards
-    const deals = document.querySelectorAll('.deal-card');
-    const filterType = this.textContent.trim().toLowerCase();
-
-    deals.forEach(deal => {
-        const savings = deal.querySelector('.deal-saving').textContent;
-        const daysLeft = deal.querySelector('.expires').textContent;
+    function applyFilters() {
+        const activeFilterButton = document.querySelector('.filter-button.active');
+        const filterType = activeFilterButton ? activeFilterButton.textContent.trim().toLowerCase() : 'all savings';
+        const searchQuery = searchInput.value.toLowerCase().trim();
         
-        // Show all deals if "All Savings" is selected
-        if (filterType === 'all savings') {
-            deal.style.display = 'flex';
-            return;
-        }
-
-        // Handle savings range filters
-        if (filterType.includes('$')) {
-            const amount = parseInt(savings.match(/\$(\d+)/)[1]);
-            const [min, max] = filterType.match(/\d+/g).map(Number);
+        const deals = document.querySelectorAll('.deal-card');
+        
+        deals.forEach(deal => {
+            let show = true;
             
-            if (max) {
-                deal.style.display = (amount >= min && amount <= max) ? 'flex' : 'none';
-            } else {
-                deal.style.display = (amount >= min) ? 'flex' : 'none';
+            // Check if the deal matches the search query
+            const title = deal.querySelector('.deal-title').textContent.toLowerCase();
+            const itemNumber = deal.querySelector('.item-number')?.textContent.toLowerCase() || '';
+            const matchesSearch = searchQuery ? (title.includes(searchQuery) || itemNumber.includes(searchQuery)) : true;
+            
+            // Apply filter conditions
+            if (filterType === 'all savings') {
+                show = matchesSearch;
+            } else if (filterType.includes('$')) {
+                const savingsText = deal.querySelector('.deal-saving').textContent;
+                const savingsMatch = savingsText.match(/\$(\d+)/);
+                const savings = savingsMatch ? parseFloat(savingsMatch[1]) : 0;
+                const [min, max] = filterType.match(/\d+/g).map(Number);
+                show = savings >= min && (max ? savings <= max : true) && matchesSearch;
+            } else if (filterType === 'ending soon') {
+                const expiresText = deal.querySelector('.expires').textContent;
+                const daysLeftMatch = expiresText.match(/\d+/);
+                const daysLeft = daysLeftMatch ? parseInt(daysLeftMatch[0]) : 999;
+                show = daysLeft <= 7 && matchesSearch;
+            } else if (filterType === 'highest savings') {
+                const savingsText = deal.querySelector('.deal-saving').textContent;
+                const savingsMatch = savingsText.match(/\$(\d+)/);
+                const savings = savingsMatch ? parseFloat(savingsMatch[1]) : 0;
+                show = savings >= 50 && matchesSearch;
             }
-        }
-
-        // Handle "Ending Soon" filter
-        if (filterType === 'ending soon') {
-            const days = parseInt(daysLeft.match(/\d+/)[0]);
-            deal.style.display = (days <= 7) ? 'flex' : 'none';
-        }
-
-        // Handle "Highest Savings" filter
-        if (filterType === 'highest savings') {
-            const amount = parseInt(savings.match(/\$(\d+)/)[1]);
-            deal.style.display = (amount >= 50) ? 'flex' : 'none';
-        }
+            
+            deal.style.display = show ? 'flex' : 'none';
+        });
+    }
+    
+    // Filter button clicks
+    filterButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            applyFilters();
+        });
     });
-}
+    
+    // Search input changes
+    searchInput.addEventListener('input', applyFilters);
+    
+    // Clear button click
+    clearSearch.addEventListener('click', () => {
+        searchInput.value = '';
+        applyFilters();
+    });
+    
+    // Initial filter application (optional, if default filter is set)
+    applyFilters();
+});

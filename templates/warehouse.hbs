@@ -31,6 +31,7 @@
     
     <!-- Load warehouse locator first -->
     <script src="/js/warehouse-locator.js"></script>
+    <script src="/js/enhanced-warehouse.js"></script>
     <script>
         console.log('Warehouse locator script loaded');
     </script>
@@ -260,28 +261,36 @@
                     <strong class="warehouse-address">{{warehouse.address}}, {{warehouse.city}}</strong>
                 </div>
             </div>
+            <div class="search-container">
+        <input type="text" id="searchInput" placeholder="Search deals 🔍">
+        <button id="clearSearch">Clear</button>
+    </div>
 <button class="change-warehouse" >Change Warehouse</button>        </div>
     </div>
 
     {{> deal_list_top_ad}}
 
-    <div class="filters">
-        <div class="filter-group">
-            <button class="filter-button active">All Savings</button>
-            <button class="filter-button">$0-$10</button>
-            <button class="filter-button">$10-$50</button>
-            <button class="filter-button">$50+</button>
-        </div>
-        <div class="filter-group">
-            <button class="filter-button">Ending Soon</button>
-            <button class="filter-button">Highest Savings</button>
-        </div>
+<div class="filters">
+
+    <div class="filter-group" data-type="filter">
+        <button class="filter-button active" data-filter="all">All Savings</button>
+        <button class="filter-button" data-filter="range" data-min="0" data-max="10">$0-$10</button>
+        <button class="filter-button" data-filter="range" data-min="10" data-max="50">$10-$50</button>
+        <button class="filter-button" data-filter="range" data-min="50" data-max="Infinity">$50+</button>
     </div>
+    <div class="filter-group" data-type="sort">
+        <button class="filter-button" data-sort="ending-soon">Ending Soon</button>
+        <button class="filter-button" data-sort="highest-savings">Highest Savings</button>
+    </div>
+</div>
 
     <main class="deals-grid">
         {{#if warehouse.deals.length}}
         {{#each warehouse.deals}}
-            <a href="/costco-deals/{{../warehouse.slug}}/{{this.slug}}" class="deal-card">
+              <a href="/costco-deals/{{../warehouse.slug}}/{{this.slug}}" 
+   class="deal-card" 
+   data-savings="{{this.savingsValue}}" 
+   data-days-left="{{this.daysLeft}}">
                 <img src="{{this.imageUrl}}" 
                      alt="{{this.title}}" 
                      class="deal-image"
@@ -329,7 +338,7 @@
             lat: {{warehouse.lat}},
             lon: {{warehouse.lon}}
         };
-        const warehouses = {{{json allWarehouses}}};
+        const warehouses = null;
         let locator = new WarehouseLocator();
 
 

@@ -137,7 +137,7 @@
 
 
 <script src="/js/enhanced-warehouse.js"></script>
-<script>
+{{!-- <script>
     const filterButtons = document.querySelectorAll('.filter-button');
 const dealsGrid = document.querySelector('.deals-grid');
 
@@ -161,13 +161,13 @@ filterButtons.forEach(button => {
         const sortCriteria = this.getAttribute('data-sort');
 
         if (filterType === 'all') {
-            document.querySelectorAll('.deal-card').forEach(card => card.style.display = 'block');
+            document.querySelectorAll('.deal-card').forEach(card => card.style.display = '');
         } else if (filterType === 'range') {
             const min = parseFloat(this.getAttribute('data-min'));
             const max = this.getAttribute('data-max') === 'Infinity' ? Infinity : parseFloat(this.getAttribute('data-max'));
             document.querySelectorAll('.deal-card').forEach(card => {
                 const savings = parseFloat(card.getAttribute('data-savings'));
-                card.style.display = (savings >= min && savings < max) ? 'block' : 'none';
+                card.style.display = (savings >= min && savings < max) ? '' : 'none';
             });
         } else if (sortCriteria) {
             sortDeals(sortCriteria);
@@ -175,7 +175,7 @@ filterButtons.forEach(button => {
     });
 });
 
-</script>
+</script> --}}
 <script>
         // Responsive ad placement
         function adjustAdPlacement() {

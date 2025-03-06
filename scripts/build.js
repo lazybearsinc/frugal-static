@@ -662,6 +662,64 @@ const headerCssContent = `
         max-height: 60vh;
     }
 }
+
+/* Style the search container */
+.search-container {
+    display: flex;
+    align-items: center;
+    gap: 8px; /* Consistent spacing between elements */
+}
+
+/* Style the search input */
+#searchInput {
+    padding: 10px 16px; /* Matches .change-warehouse padding */
+    border: 1px solid var(--border-color);
+    border-radius: 8px; /* Matches existing rounded buttons */
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 0.9em;
+    font-weight: 500;
+    color: var(--text-color);
+    background-color: white;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+#searchInput:focus {
+    border-color: var(--primary-color); /* Highlights on focus */
+}
+
+/* Style the clear button */
+#clearSearch {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    background: var(--primary-color);
+    color: white;
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 0.9em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+#clearSearch:hover {
+    background: var(--primary-hover);
+}
+
+/* Ensure responsiveness */
+@media (max-width: 768px) {
+    .warehouse-selector {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .search-container {
+        width: 100%;
+        margin: 12px 0;
+    }
+    #searchInput, #clearSearch {
+        width: 100%;
+    }
+}
 `;
 
     await fs.writeFile(path.join(cssDir, 'header-improvements.css'), headerCssContent.trim());
