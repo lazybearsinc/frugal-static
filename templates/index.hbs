@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Costco Deals | Find the Best Savings at Your Local Warehouse</title>
     <meta name="description" content="Browse the latest Costco deals and instant savings. Find great discounts on groceries, electronics, home goods and more at your local Costco warehouse.">
-     <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/Android.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/Android.png">
-    <link rel="shortcut icon" type="image/png" href="assets/icons/Android.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/Android.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/assets/icons/Android.png">
+<link rel="shortcut icon" type="image/png" href="/assets/icons/Android.png">
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-B4EX7LQ7V4"></script>
     <script>
@@ -101,11 +101,11 @@
 </div>
 
 <main class="deals-grid">
-    {{#each defaultWarehouse.deals}}
-     <a href="/costco-deals/{{../warehouse.slug}}/{{this.slug}}" 
-   class="deal-card" 
-   data-savings="{{this.savingsValue}}" 
-   data-days-left="{{this.daysLeft}}">
+    {{#each warehouse.deals}}
+        <a href="/costco-deals/{{../warehouse.slug}}/{{this.slug}}" 
+           class="deal-card" 
+           data-savings="{{this.savingsValue}}" 
+           data-days-left="{{this.daysLeft}}">
             <img src="{{this.imageUrl}}" 
                  alt="{{this.title}}" 
                  class="deal-image"

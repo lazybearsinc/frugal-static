@@ -1,5 +1,5 @@
 :root {
-    --primary-color: #1A365D;
+    --primary-color: #0A4D68;
     --primary-hover: #234876;
     --secondary-color: #D0021B;
     --secondary-gradient: linear-gradient(135deg, #D0021B, #B7021B);
@@ -22,7 +22,7 @@
 }
 
 .deals-logo {
-    height: 32px;
+    height: 40px;
 }
 
 .deals-logo-image {

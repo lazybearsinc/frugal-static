@@ -159,7 +159,7 @@ async function fetchData() {
         const validWarehouses = processedWarehouses.filter(warehouse => 
             !isNaN(warehouse.lat) && 
             !isNaN(warehouse.lon) && 
-            warehouse.lat !== 0 && 
+            warehouse.lat !== 0 &&  
             warehouse.lon !== 0
         );
 
@@ -202,7 +202,8 @@ async function fetchData() {
                     daysLeft: Math.ceil((new Date(deal.end_date) - new Date()) / (1000 * 60 * 60 * 24)),
                     description: deal.description,
                     isOnlineOnly: deal.is_online_only,
-                    onlineLink: deal.online_link || deal.product_url
+                    onlineLink: deal.online_link || deal.product_url,
+                    dealHash: deal.deal_hash
                 }));
 
                 allDeals = [...allDeals, ...processedDeals];
@@ -400,28 +401,56 @@ async function generateDealPages(warehouses, template) {
 }
 
 async function generateIndexPage(warehouses, template) {
-    // Simply use the first warehouse as default instead of calculating distance
     const defaultWarehouse = warehouses[0];
-
     if (!defaultWarehouse) {
         console.error('❌ No warehouses available to use as default');
         process.exit(1);
     }
-
     const indexPath = path.join(__dirname, '..', 'public', 'costco-deals');
     await ensureDirectoryExists(indexPath);
-
     const html = template({
-        defaultWarehouse,
+        warehouse: defaultWarehouse, // Changed from defaultWarehouse to warehouse
         allWarehouses: warehouses,
         title: `Costco Deals | Find the Best Savings at Your Local Warehouse`,
-        description: `Browse the latest Costco deals and instant savings. Find great discounts on groceries, electronics, home goods and more.`
+        description: `Browse the latest Costco deals and instant savings...`
     });
-
     await fs.writeFile(path.join(indexPath, 'index.html'), html);
     console.log(`✓ Generated index page`);
 }
+async function generateRedirectPages(warehouses) {
+    console.log('🏗️ Generating redirect pages...');
+    const redirectBasePath = path.join(__dirname, '..', 'public', 'redirect');
+    await ensureDirectoryExists(redirectBasePath); // Ensure the redirect directory exists
 
+    for (const warehouse of warehouses) {
+        for (const deal of warehouse.deals) {
+                        // Skip if dealHash is undefined
+                        if (!deal.dealHash) {
+                            console.warn(`⚠️ Skipping redirect page for deal "${deal.title}" - no dealHash available`);
+                            continue;
+                        }
+            const redirectPath = path.join(redirectBasePath, deal.dealHash);
+            await ensureDirectoryExists(redirectPath);
+            const dealUrl = `/costco-deals/${warehouse.slug}/${deal.slug}`;
+            const htmlContent = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="refresh" content="0; url=${dealUrl}">
+    <title>Redirecting to Deal</title>
+</head>
+<body>
+    <p>Redirecting to <a href="${dealUrl}">${deal.title}</a>...</p>
+</body>
+</html>
+            `.trim();
+            await fs.writeFile(path.join(redirectPath, 'index.html'), htmlContent);
+            console.log(`✓ Generated redirect page for deal: ${deal.dealHash}`);
+        }
+    }
+    console.log('✅ All redirect pages generated');
+}
 async function ensureStaticDirectories() {
     const dirs = [
         path.join(__dirname, '..', 'public'),
@@ -458,7 +487,7 @@ async function copyCssFiles() {
 // Copy header-improvements.css
 const headerCssContent = `
 :root {
-    --primary-color: #1A365D;
+    --primary-color: #0A4D68;
     --primary-hover: #234876;
     --secondary-color: #D0021B;
     --secondary-gradient: linear-gradient(135deg, #D0021B, #B7021B);
@@ -481,7 +510,7 @@ const headerCssContent = `
 }
 
 .deals-logo {
-    height: 32px;
+    height: 40px;
 }
 
 .deals-logo-image {
@@ -757,6 +786,8 @@ async function build() {
         await generateDealPages(warehouses, dealTemplate);
         await generateWarehousePages(warehouses, warehouseTemplate);
         await generateIndexPage(warehouses, indexTemplate);
+        // Generate redirect pages (add this line)
+        await generateRedirectPages(warehouses);
         
         console.log('✅ Build completed successfully!');
     } catch (error) {
